@@ -27,6 +27,8 @@ jobs:
         run: ragfit/scripts/check-plugins.sh
       - name: Plugin check tests (incl. nested plugin.json)
         run: ragfit/scripts/test-check-plugins.sh
+      - name: Plugin package path tests (fixed-string id match)
+        run: ragfit/scripts/test-fetch-plugins.sh
       - name: Plugin pins (version, checksum, license)
         run: ragfit/scripts/verify-plugin-pins.sh
       - name: Plugin bake smoke test (both architectures, stand-in base image)
