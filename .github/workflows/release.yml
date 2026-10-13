@@ -1,0 +1,76 @@
+name: release
+on:
+  push:
+    tags: ['ragfit-monitor-v*']
+permissions:
+  contents: write      # release assets
+  packages: write      # GHCR push
+  id-token: write      # cosign keyless (GitHub OIDC, Rekor)
+  attestations: write
+env:
+  IMAGE: ghcr.io/erynoagroup/ragfit-monitor
+  UPSTREAM_VERSION: v13.2.4
+jobs:
+  image:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc }
+      - run: corepack enable && yarn install --immutable
+      - name: License bundle (THIRD_PARTY_NOTICES, license texts)
+        run: ragfit/scripts/third-party-notices.sh dist/licenses
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build upstream image (OSS tags only)
+        run: |
+          docker build -t ragfit-monitor-base:ci \
+            --build-arg BUILD_BRANCH=${{ github.ref_name }} \
+            --build-arg COMMIT_SHA=${{ github.sha }} \
+            --build-arg JS_PLATFORM=linux/arm64 \
+            --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss .
+      - name: Add /licenses and labels
+        run: |
+          docker build -f ragfit/docker/Dockerfile.licenses \
+            --build-arg BASE_IMAGE=ragfit-monitor-base:ci \
+            --label org.opencontainers.image.version=${{ github.ref_name }} \
+            --label org.opencontainers.image.revision=${{ github.sha }} \
+            --label org.opencontainers.image.source=https://github.com/${{ github.repository }} \
+            --label org.opencontainers.image.licenses=AGPL-3.0-only \
+            --label io.ragfit.upstream.name=grafana \
+            --label io.ragfit.upstream.version=${UPSTREAM_VERSION} \
+            -t "${IMAGE}:${{ github.ref_name }}" dist/licenses
+      - name: Plugin allowlist check on the built image
+        run: ragfit/scripts/check-plugins.sh "${IMAGE}:${{ github.ref_name }}"
+      - id: build
+        name: Push and resolve digest
+        run: |
+          docker push "${IMAGE}:${{ github.ref_name }}"
+          echo "digest=$(docker inspect --format '{{index .RepoDigests 0}}' "${IMAGE}:${{ github.ref_name }}" | cut -d'@' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign keyless
+        run: cosign sign --yes "${IMAGE}@${{ steps.build.outputs.digest }}"
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+      - name: Attest SBOM (cosign keyless)
+        run: cosign attest --yes --type spdxjson --predicate sbom.spdx.json "${IMAGE}@${{ steps.build.outputs.digest }}"
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+      - name: Source tarball (AGPL corresponding source)
+        run: git archive --format=tar.gz --prefix=ragfit-monitor-${{ github.ref_name }}/ -o source.tar.gz HEAD
+      - name: Release assets
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          tar -czf licenses.tar.gz -C dist licenses
+          gh release create "${{ github.ref_name }}" sbom.spdx.json source.tar.gz licenses.tar.gz --notes "Upstream ${UPSTREAM_VERSION}. Image digest ${{ steps.build.outputs.digest }}."
