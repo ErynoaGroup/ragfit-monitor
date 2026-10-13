@@ -4,7 +4,7 @@ RagFit | Monitor is the observability and dashboard frontend of the RagFit platf
 
 - License: AGPL-3.0-only, with some directories under Apache-2.0 (see `LICENSE` and `LICENSING.md`).
 - Origin, copyright notices and the list of changes: see `LICENSE`, `NOTICE.md` and `MODIFICATIONS.md`.
-- Releases are tagged `ragfit-monitor-vX.Y.Z`. Container images are built only by this repository's CI and are signed keyless.
+- Releases are tagged `ragfit-monitor-vX.Y.Z`. Container images are built only by this repository's CI as a multi-arch index (linux/arm64, linux/amd64), signed and SBOM-attested with the key in `ragfit/cosign.pub` (no transparency log entry). Verify with `cosign verify --key ragfit/cosign.pub --insecure-ignore-tlog=true ghcr.io/erynoagroup/ragfit-monitor@<digest>`.
 
 ## Source code (AGPL-3.0 §13)
 
