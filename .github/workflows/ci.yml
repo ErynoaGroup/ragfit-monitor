@@ -1,0 +1,15 @@
+name: ci
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (no push)
+        run: docker build -t ragfit-monitor:ci --build-arg JS_PLATFORM=linux/arm64 --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss --build-arg COMMIT_SHA=${{ github.sha }} .
+      - name: Plugin allowlist check
+        run: ragfit/scripts/check-plugins.sh ragfit-monitor:ci

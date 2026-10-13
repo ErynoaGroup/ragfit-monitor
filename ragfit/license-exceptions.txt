@@ -1,0 +1,10 @@
+# Go modules excluded from the forbidden/unknown license gate after manual review.
+# Format: module path, then a reason. Changes need review by Lookout.
+github.com/grafana/alerting AGPL-3.0, compatible with this AGPL-3.0 project, source public
+github.com/grafana/alerting/apps/historian/pkg AGPL-3.0, compatible with this AGPL-3.0 project, source public
+github.com/grafana/schemads AGPL-3.0, compatible with this AGPL-3.0 project, source public
+github.com/apache/thrift/lib/go/thrift GNU all-permissive notice on single files, permissive, module is Apache-2.0
+go.opentelemetry.io/otel/exporters/jaeger/internal/third_party/thrift/lib/go/thrift GNU all-permissive notice on single files, permissive
+github.com/jmespath/go-jmespath Apache-2.0 (repository license), no license file detected in the module copy
+github.com/segmentio/asm MIT-0 (repository license), not detected by the classifier
+github.com/grafana/nanogit/gittest Apache-2.0 (repository license), test helper package

@@ -1,0 +1,4 @@
+# Plugin IDs allowed in the image besides core plugins compiled into the binary.
+# Only plugins whose license is AGPL-3.0, Apache-2.0 or MIT with public source.
+# No private-signed, enterprise or commercial plugins (decision 0001, item 9).
+# One ID per line. Changes need review by Lookout.
