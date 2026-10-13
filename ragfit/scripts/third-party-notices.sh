@@ -25,4 +25,7 @@ npx --yes license-checker-rseidelsohn@4.4.2 --production --excludePrivatePackage
   echo; echo "== npm packages (production) =="; cat "$OUT/npm/licenses.csv"
 } > "$OUT/THIRD_PARTY_NOTICES"
 cp LICENSE LICENSING.md NOTICE.md MODIFICATIONS.md TRADEMARKS.md ragfit/license-exceptions.txt "$OUT/"
-curl -fsSL https://www.gnu.org/licenses/agpl-3.0.txt -o "$OUT/AGPL-3.0.txt"
+# AGPL-3.0 text comes from the repository LICENSE (no network fetch).
+head -n 2 LICENSE | grep -q "GNU AFFERO GENERAL PUBLIC LICENSE" && sed -n 2p LICENSE | grep -q "Version 3" \
+  || { echo "LICENSE is not the AGPL-3.0 text"; exit 1; }
+cp LICENSE "$OUT/AGPL-3.0.txt"
