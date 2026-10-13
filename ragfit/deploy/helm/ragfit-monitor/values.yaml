@@ -33,8 +33,10 @@ provisioning:
 
 # Extra environment variables, allowlist only: GF_LOG_*, GF_ANALYTICS_*, GF_DATABASE_*, GF_METRICS_*,
 # and DS_* for datasource values. Sign-in, security, server, paths, plugins and users settings are
-# fixed by the chart; overriding them makes rendering fail. Names ending in _PASSWORD, _TOKEN, _SECRET
-# or _KEY must use valueFrom.secretKeyRef; a plain value makes rendering fail.
+# fixed by the chart; overriding them makes rendering fail. Names containing PASS, TOKEN, SECRET, KEY,
+# CREDENTIAL or AUTH (also PASSWD, PASSWORD, APIKEY), and names ending in _URL, _URI, _DSN, _CONNSTR or
+# _CONNECTION_STRING (they can carry user:password, e.g. GF_DATABASE_URL) must use
+# valueFrom.secretKeyRef; a plain value makes rendering fail. The match is deliberately broad.
 extraEnv: []
 
 # Optional NetworkPolicy. When enabled, ingress to the http port is allowed only from ingressFrom
