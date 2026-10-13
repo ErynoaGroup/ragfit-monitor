@@ -6,9 +6,9 @@ import { colorManipulator, type GrafanaTheme2, type NavModelItem } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import placeholderIconSvg from 'img/ragfit/placeholder-icon.svg';
 import wordmarkDarkPng from 'img/ragfit/login-wordmark-dark.png';
 import wordmarkLightPng from 'img/ragfit/login-wordmark-light.png';
+import placeholderIconSvg from 'img/ragfit/placeholder-icon.svg';
 
 export interface BrandComponentProps {
   className?: string;
