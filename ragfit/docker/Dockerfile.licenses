@@ -1,0 +1,5 @@
+# Adds the license bundle to the upstream-built image without patching the upstream Dockerfile.
+# Build context is dist/licenses (the repo .dockerignore excludes dist).
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY . /licenses/

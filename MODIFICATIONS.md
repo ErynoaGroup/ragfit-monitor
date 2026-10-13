@@ -21,4 +21,5 @@ Each modified upstream file additionally carries the header line
 | 2026-10-13 | Replaced `README.md` | `README.md` | Product README for RagFit Monitor; upstream marks are not used outside LICENSE, NOTICE and this file |
 | 2026-10-13 | Added `docs/decisions/0001-mo-decisions.md` | `docs/decisions/0001-mo-decisions.md` | Record of project decisions |
 | 2026-10-13 | Added `docs/plans/mo4-upgrade.md` | `docs/plans/mo4-upgrade.md` | Upgrade plan from the running instance |
+| 2026-10-13 | Added own CI and release tooling (no upstream file changed) | `.github/workflows/*`, `ragfit/**` | Policy checks, license bundle with THIRD_PARTY_NOTICES under /licenses in the image, plugin allowlist, GHCR release signed keyless with SBOM attestation |
 | 2026-10-13 | Added this file | `MODIFICATIONS.md` | Change notice per AGPL-3.0 §5(a) |

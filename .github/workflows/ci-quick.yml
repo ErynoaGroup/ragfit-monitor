@@ -1,0 +1,46 @@
+name: ci-quick
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Upstream base is intact apart from own files
+        run: ragfit/scripts/verify-upstream-base.sh HEAD
+      - name: License files present
+        run: for f in LICENSE LICENSING.md NOTICE.md MODIFICATIONS.md; do test -f "$f"; done
+      - name: Enterprise build tag not used
+        run: |
+          grep -q 'IsEnterprise = false' pkg/extensions/main.go
+          ! grep -rnE -- '(-tags|TAGS=).*enterprise' ragfit .github
+      - name: Origin wording only in license files
+        run: "! grep -rniI 'based on grafana' --exclude=LICENSE --exclude=NOTICE.md --exclude=MODIFICATIONS.md --exclude-dir=.git ."
+      - name: Plugin config check
+        run: ragfit/scripts/check-plugins.sh
+      - name: Brand scan (report only until the branding patch lands)
+        continue-on-error: true
+        run: grep -rliI 'grafana' public/locales public/img | grep -v -x -f <(grep -v '^#' ragfit/brand-allowlist.txt) || true
+  licenses:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc }
+      - run: corepack enable && yarn install --immutable
+      - name: Third-party notices and license scan
+        run: ragfit/scripts/third-party-notices.sh dist/licenses
+      - uses: actions/upload-artifact@v4
+        with: { name: licenses, path: dist/licenses }
+  go-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - run: go test -short ./pkg/api/... ./pkg/login/... ./pkg/services/auth/...
