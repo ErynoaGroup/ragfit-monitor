@@ -1,0 +1,11 @@
+# Upstream files changed in this repository. Each must carry a "Modified by ErynoaGroup"
+# header (where the format allows comments) and an entry in MODIFICATIONS.md.
+NOTICE.md
+conf/defaults.ini
+pkg/api/index.go
+pkg/services/frontend/index.html
+public/app/core/components/Branding/Branding.tsx
+public/app/core/components/Login/LoginLayout.tsx
+public/app/core/components/Login/LoginPage.test.tsx
+public/views/index.html
+public/views/swagger.html

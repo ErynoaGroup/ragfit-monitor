@@ -1,3 +1,5 @@
+// Modified by ErynoaGroup, 2026-10-13: product title and neutral icon placeholders.
+
 package api
 
 import (
@@ -190,12 +192,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
-		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
-		AppTitle:                            "Grafana",
+		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/ragfit/placeholder-32.png"),  // #nosec G203
+		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/ragfit/placeholder-180.png"), // #nosec G203
+		AppTitle:                            "RagFit | Monitor",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
+		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/ragfit/placeholder-icon.svg"), // #nosec G203
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,

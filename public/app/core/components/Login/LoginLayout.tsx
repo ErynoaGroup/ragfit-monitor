@@ -1,3 +1,4 @@
+// Modified by ErynoaGroup, 2026-10-13: login logo size for the RagFit wordmark (aspect ratio kept, no cropping).
 import { cx, css, keyframes } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
@@ -112,11 +113,12 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     }),
     loginLogo: css({
       width: '100%',
-      maxWidth: 60,
+      maxWidth: 232,
+      height: 'auto',
       marginBottom: theme.spacing(2),
 
       [theme.breakpoints.up('sm')]: {
-        maxWidth: 100,
+        maxWidth: 464,
       },
     }),
     loginLogoWrapper: css({
