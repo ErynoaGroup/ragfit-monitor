@@ -55,10 +55,13 @@ jobs:
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version-file: go.mod
+      # corepack first, so the yarn cache lookup in setup-node uses the repository's yarn version.
+      - run: corepack enable
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-      - run: corepack enable && yarn install --immutable
+          cache: yarn
+      - run: yarn install --immutable
       - name: Third-party notices and license scan
         run: ragfit/scripts/third-party-notices.sh dist/licenses
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -77,16 +80,20 @@ jobs:
       - run: go test -short ./pkg/api/... ./pkg/login/... ./pkg/services/auth/...
   frontend:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
       contents: read
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      # corepack first, so the yarn cache lookup in setup-node uses the repository's yarn version.
+      - run: corepack enable
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-      - run: corepack enable && yarn install --immutable
+          cache: yarn
+      - run: yarn install --immutable
       - name: Lint changed upstream frontend files
         run: |
           grep -v '^#' ragfit/modified-upstream-files.txt | grep -E '[.]tsx?$' | xargs -r yarn eslint --max-warnings 0
