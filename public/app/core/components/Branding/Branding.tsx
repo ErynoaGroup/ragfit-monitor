@@ -1,3 +1,4 @@
+// Modified by ErynoaGroup, 2026-10-13: RagFit Monitor branding (wordmark, neutral icon placeholder, product title).
 import { css, cx } from '@emotion/css';
 import { type FC, type JSX } from 'react';
 
@@ -5,17 +6,20 @@ import { colorManipulator, type GrafanaTheme2, type NavModelItem } from '@grafan
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import g8LoginDarkSvg from 'img/g8_login_dark.svg';
-import g8LoginLightSvg from 'img/g8_login_light.svg';
-import grafanaIconSvg from 'img/grafana_icon.svg';
+import placeholderIconSvg from 'img/ragfit/placeholder-icon.svg';
+import wordmarkDarkPng from 'img/ragfit/login-wordmark-dark.png';
+import wordmarkLightPng from 'img/ragfit/login-wordmark-light.png';
 
 export interface BrandComponentProps {
   className?: string;
   children?: JSX.Element | JSX.Element[];
 }
 
+// The RagFit name and logo are Erynoa trademarks and not covered by the AGPL; see TRADEMARKS.md.
 const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
-  return <img className={className} src={`${logo ? logo : grafanaIconSvg}`} alt="Grafana" />;
+  const theme = useTheme2();
+  const wordmark = theme.isDark ? wordmarkDarkPng : wordmarkLightPng;
+  return <img className={className} src={`${logo ? logo : wordmark}`} alt="RagFit | Monitor" />;
 };
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
@@ -29,10 +33,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
       right: 0,
       bottom: 0,
       top: 0,
-      background: `url(${theme.isDark ? g8LoginDarkSvg : g8LoginLightSvg})`,
-      backgroundPosition: 'top center',
-      backgroundSize: 'auto',
-      backgroundRepeat: 'no-repeat',
+      background: theme.colors.background.canvas,
 
       opacity: 0,
 
@@ -40,10 +41,6 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
         transition: 'opacity 3s ease-in-out',
       },
 
-      [theme.breakpoints.up('md')]: {
-        backgroundPosition: 'center',
-        backgroundSize: 'cover',
-      },
     },
   });
 
@@ -51,7 +48,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
-  return <img className={className} src={grafanaIconSvg} alt="Grafana" />;
+  return <img className={className} src={placeholderIconSvg} alt="" />;
 };
 
 export function HomeLogo({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
@@ -146,8 +143,8 @@ export class Branding {
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
   static LoginBoxBackground = LoginBoxBackground;
-  static AppTitle = 'Grafana';
-  static LoginTitle = 'Welcome to Grafana';
+  static AppTitle = 'RagFit | Monitor';
+  static LoginTitle = 'Welcome to RagFit | Monitor';
   static HideEdition = false;
   static GetLoginSubTitle = (): null | string => {
     return null;

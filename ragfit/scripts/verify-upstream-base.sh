@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Own additions are allowed under ragfit/ and .github/; any change to upstream files must be listed here.
+# Own additions are allowed under ragfit/, .github/, public/img/ragfit/ and TRADEMARKS.md.
+# Modified upstream files must be listed in ragfit/modified-upstream-files.txt.
 # Verifies that a ragfit-monitor ref differs from upstream v13.2.4 only in our own files.
 set -euo pipefail
 REF="${1:-HEAD}"
@@ -10,5 +11,9 @@ test "$(git rev-parse "upstream-$UP_TAG^{commit}")" = "$UP_COMMIT" || { echo "up
 echo "upstream $UP_TAG = $UP_COMMIT (ok)"
 DIFF=$(git diff --no-renames --name-status "upstream-$UP_TAG^{tree}" "$REF^{tree}" | grep -v -E $'^D\t\\.github/' || true)
 echo "$DIFF"
-UNEXPECTED=$(echo "$DIFF" | grep -v -E $'^(A\tMODIFICATIONS\\.md|M\tREADME\\.md|A\t(ragfit|\\.github)/.*)$' || true)
-[ -z "$UNEXPECTED" ] && echo "OK: only own files differ (.github removed, README.md replaced, MODIFICATIONS.md and own tooling added)" || { echo "UNEXPECTED differences above"; exit 1; }
+UNEXPECTED=$(echo "$DIFF" | grep -v -E $'^(A\tMODIFICATIONS\\.md|A\tTRADEMARKS\\.md|M\tREADME\\.md|A\t(ragfit|\\.github|public/img/ragfit)/.*)$' || true)
+LISTED=ragfit/modified-upstream-files.txt
+if [ -f "$LISTED" ]; then
+  UNEXPECTED=$(echo "$UNEXPECTED" | grep -v -x -F -f <(grep -v '^#' "$LISTED" | sed 's/^/M\t/' ) || true)
+fi
+[ -z "$UNEXPECTED" ] && echo "OK: only own files and listed upstream modifications differ" || { echo "UNEXPECTED differences above"; exit 1; }

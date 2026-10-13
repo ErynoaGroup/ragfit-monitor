@@ -24,5 +24,5 @@ npx --yes license-checker-rseidelsohn@4.4.2 --production --excludePrivatePackage
   echo; echo "== Go modules without a detected license file (manual review) =="; cat "$OUT/go/unresolved.txt"
   echo; echo "== npm packages (production) =="; cat "$OUT/npm/licenses.csv"
 } > "$OUT/THIRD_PARTY_NOTICES"
-cp LICENSE LICENSING.md NOTICE.md MODIFICATIONS.md ragfit/license-exceptions.txt "$OUT/"
+cp LICENSE LICENSING.md NOTICE.md MODIFICATIONS.md TRADEMARKS.md ragfit/license-exceptions.txt "$OUT/"
 curl -fsSL https://www.gnu.org/licenses/agpl-3.0.txt -o "$OUT/AGPL-3.0.txt"
