@@ -25,6 +25,10 @@ jobs:
         run: "! grep -rniI 'based on grafana' README.md ragfit"
       - name: Plugin config check
         run: ragfit/scripts/check-plugins.sh
+      - name: Plugin check tests (incl. nested plugin.json)
+        run: ragfit/scripts/test-check-plugins.sh
+      - name: Plugin pins (version, checksum, license)
+        run: ragfit/scripts/verify-plugin-pins.sh
       - name: OAuth role mapping (full team claim only, deny by default)
         run: |
           python3 -m pip install --quiet jmespath==1.0.1
