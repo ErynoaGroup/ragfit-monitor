@@ -1,4 +1,6 @@
 # Plugin IDs allowed in the image besides core plugins compiled into the binary.
 # Only plugins whose license is AGPL-3.0, Apache-2.0 or MIT with public source.
-# No private-signed, enterprise or commercial plugins (decision 0001, item 9).
-# One ID per line. Changes need a reviewed PR.
+# No private-signed, enterprise or commercial plugins.
+# Format: <id> <version> <sha256 linux-arm64 zip> <sha256 linux-amd64 zip> <license>
+# Zips come from the public plugin catalog download API. Changes need a reviewed PR.
+yesoreyeram-infinity-datasource 3.11.1 4d42f7525d495f40274436674e8ae0768e10545fb3bc6fe71c7750517cddcd9f 422668d177ff14de3c97f3b128cee09890d04aa767e4513bb7b6c5336fa737d7 Apache-2.0

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fails if the repository config preinstalls plugins, or if the given image
-# contains a plugin ID that is not in ragfit/plugins-allowlist.txt.
+# contains a plugin ID or version that is not pinned in ragfit/plugins-allowlist.txt.
 set -euo pipefail
 ALLOW=ragfit/plugins-allowlist.txt
 for key in preinstall preinstall_sync preinstall_async; do
@@ -14,10 +14,16 @@ trap 'docker rm -f "$cid" >/dev/null; rm -rf "$tmp"' EXIT
 for d in /usr/share/grafana/data/plugins-bundled /var/lib/grafana/plugins; do
   mkdir -p "$tmp$d"; docker cp "$cid:$d/." "$tmp$d" 2>/dev/null || true
 done
-ids=$(find "$tmp" -name plugin.json -exec jq -r '.id // empty' {} + | sort -u)
+# Top-level plugin.json files only: "<id> <version>" per plugin.
+found=$(find "$tmp/usr/share/grafana/data/plugins-bundled" "$tmp/var/lib/grafana/plugins" -mindepth 2 -maxdepth 2 -name plugin.json -exec jq -r '"\(.id // "") \(.info.version // "")"' {} + | sort -u)
+ids=$(echo "$found" | awk 'NF {print $1}' | sort -u)
 bad=0
-for id in $ids; do
-  if grep -qxF "$id" <(grep -v '^#' "$ALLOW"); then echo "allowed: $id"; else echo "NOT ALLOWED: $id"; bad=1; fi
-done
+while read -r id ver; do
+  [ -n "$id" ] || continue
+  pin=$(grep -v '^#' "$ALLOW" | awk -v i="$id" '$1==i {print $2}')
+  if [ -z "$pin" ]; then echo "NOT ALLOWED: $id"; bad=1
+  elif [ "$pin" != "$ver" ]; then echo "VERSION MISMATCH: $id $ver (pinned $pin)"; bad=1
+  else echo "allowed: $id $ver"; fi
+done <<< "$found"
 [ -n "$ids" ] || echo "no external plugins in image"
 exit $bad
