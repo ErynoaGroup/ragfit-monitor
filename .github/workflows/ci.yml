@@ -10,12 +10,17 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: go.mod
       - name: Build image (no push)
         env:
           COMMIT_SHA: ${{ github.sha }}
         run: docker build -t ragfit-monitor-base:ci --build-arg JS_PLATFORM=linux/arm64 --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss --build-arg COMMIT_SHA="$COMMIT_SHA" .
       - name: Fetch pinned plugins (checksum-verified)
         run: ragfit/scripts/fetch-plugins.sh arm64 dist/plugins
+      - name: Plugin license gate (incl. Go modules in backend binaries)
+        run: ragfit/scripts/plugin-licenses.sh dist/plugins dist/plugin-licenses
       - name: Bake plugins into the image
         run: docker build -f ragfit/docker/Dockerfile.plugins --build-arg BASE_IMAGE=ragfit-monitor-base:ci -t ragfit-monitor:ci dist/plugins
       - name: Plugin allowlist check (all pinned plugins present)
