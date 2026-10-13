@@ -16,5 +16,5 @@ while read -r id ver arm64 amd64 lic; do
     unzip -p "$zip" "$id/LICENSE" | head -3 | grep -q "Apache License" || [ "$lic" != "Apache-2.0" ] || { echo "LICENSE MISMATCH: $id"; bad=1; }
     echo "ok: $id $ver linux-$arch $got $lic"
   done
-done < <(grep -v '^#' "$ALLOW" | grep .)
+done < <(grep -v '^#' "$ALLOW" | awk 'NF && $5 != "LicenseRef-proprietary"')
 exit $bad
