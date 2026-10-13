@@ -7,19 +7,28 @@ env:
   IMAGE: ghcr.io/erynoagroup/ragfit-monitor
   UPSTREAM_VERSION: v13.2.4
 jobs:
+  # One native build per architecture on free GitHub-hosted runners. Each pushes only a staging tag
+  # <tag>-<arch>; the release tag, signatures and the GitHub release come from the index job below,
+  # which runs only when both builds succeeded.
   image:
-    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
     permissions:
-      contents: write      # release assets
-      packages: write      # GHCR push
-      id-token: write      # cosign keyless (GitHub OIDC, Rekor)
-      attestations: write  # build provenance
+      contents: read
+      packages: write
     env:
+      ARCH: ${{ matrix.arch }}
       REF_NAME: ${{ github.ref_name }}
       COMMIT_SHA: ${{ github.sha }}
       REPOSITORY: ${{ github.repository }}
-      CERT_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/release.yml@${{ github.ref }}
-      CERT_ISSUER: https://token.actions.githubusercontent.com
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
@@ -41,10 +50,10 @@ jobs:
           docker build -t ragfit-monitor-base:ci \
             --build-arg BUILD_BRANCH="$REF_NAME" \
             --build-arg COMMIT_SHA="$COMMIT_SHA" \
-            --build-arg JS_PLATFORM=linux/arm64 \
+            --build-arg JS_PLATFORM="linux/$ARCH" \
             --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss .
       - name: Fetch pinned plugins (checksum-verified)
-        run: ragfit/scripts/fetch-plugins.sh arm64 dist/plugins
+        run: ragfit/scripts/fetch-plugins.sh "$ARCH" dist/plugins
       - name: Plugin license bundle (incl. Go modules in backend binaries)
         run: ragfit/scripts/plugin-licenses.sh dist/plugins dist/licenses/plugins
       - name: Bake plugins into the image
@@ -58,46 +67,104 @@ jobs:
             --label org.opencontainers.image.source="https://github.com/$REPOSITORY" \
             --label org.opencontainers.image.licenses=AGPL-3.0-only \
             --label io.ragfit.upstream.version="$UPSTREAM_VERSION" \
-            -t "$IMAGE:$REF_NAME" dist/licenses
+            -t "$IMAGE:$REF_NAME-$ARCH" dist/licenses
       - name: Plugin allowlist check on the built image
-        run: REQUIRE_PINNED=1 ragfit/scripts/check-plugins.sh "$IMAGE:$REF_NAME"
-      - id: build
-        name: Push and resolve digest
+        run: REQUIRE_PINNED=1 ragfit/scripts/check-plugins.sh "$IMAGE:$REF_NAME-$ARCH"
+      - name: Push and resolve digest
         run: |
-          docker push "$IMAGE:$REF_NAME"
-          echo "digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$REF_NAME" | cut -d'@' -f2)" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          docker push "$IMAGE:$REF_NAME-$ARCH"
+          d=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$REF_NAME-$ARCH" | cut -d'@' -f2)
+          [[ "$d" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "no digest for $ARCH"; exit 1; }
+          mkdir -p out && echo "$d" > "out/digest-$ARCH"
+          tar -czf "out/licenses-$ARCH.tar.gz" -C dist licenses
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: build-${{ matrix.arch }}
+          path: out/
+          retention-days: 1
+          if-no-files-found: error
+
+  index:
+    needs: image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write      # release assets
+      packages: write      # GHCR index, signatures and attestations
+      # No id-token: key-based cosign with the CI key, no Fulcio certificate, no transparency log upload.
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      COMMIT_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Public key present
+        run: grep -q 'BEGIN PUBLIC KEY' ragfit/cosign.pub || { echo "ragfit/cosign.pub missing or placeholder"; exit 1; }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: build-*
+          merge-multiple: true
+          path: out
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: index
+        name: Create the multi-arch index (linux/arm64, linux/amd64)
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create -t "$IMAGE:$REF_NAME" \
+            "$IMAGE@$(cat out/digest-arm64)" "$IMAGE@$(cat out/digest-amd64)"
+          d=$(docker buildx imagetools inspect "$IMAGE:$REF_NAME" --format '{{json .Manifest}}' | jq -r .digest)
+          [[ "$d" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "no index digest"; exit 1; }
+          p=$(docker buildx imagetools inspect "$IMAGE@$d" --format '{{json .Manifest}}' | jq -r '[.manifests[].platform | "\(.os)/\(.architecture)"] | sort | join(",")')
+          [ "$p" = "linux/amd64,linux/arm64" ] || { echo "unexpected platforms: $p"; exit 1; }
+          echo "digest=$d" >> "$GITHUB_OUTPUT"
       - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
-      - name: Sign keyless
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
-        run: cosign sign --yes "$IMAGE@$DIGEST"
-      - uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
-        with:
-          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
-          format: spdx-json
-          output-file: sbom.spdx.json
-      - name: Attest SBOM (cosign keyless)
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
-        run: cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$IMAGE@$DIGEST"
-      - name: Verify signature and SBOM attestation (identity and issuer)
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
+      - uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+      - name: SBOM per platform (no key needed)
         run: |
-          cosign verify --certificate-identity "$CERT_IDENTITY" --certificate-oidc-issuer "$CERT_ISSUER" "$IMAGE@$DIGEST" > /dev/null
-          cosign verify-attestation --type spdxjson --certificate-identity "$CERT_IDENTITY" --certificate-oidc-issuer "$CERT_ISSUER" "$IMAGE@$DIGEST" > /dev/null
-          echo "signature and attestation verified for $IMAGE@$DIGEST"
-      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
-        with:
-          subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
+          set -euo pipefail
+          for a in arm64 amd64; do syft "$IMAGE@$(cat "out/digest-$a")" -o "spdx-json=sbom-$a.spdx.json"; done
+      - name: Sign and attest with the CI key (no transparency log)
+        env:
+          INDEX: ${{ steps.index.outputs.digest }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [ -n "$COSIGN_PRIVATE_KEY" ] && [ -n "$COSIGN_PASSWORD" ] || { echo "COSIGN_PRIVATE_KEY/COSIGN_PASSWORD secrets missing"; exit 1; }
+          s()  { cosign sign   --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false "$1"; }
+          at() { cosign attest --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false --type spdxjson --predicate "$1" "$2"; }
+          s "$IMAGE@$INDEX"
+          for a in arm64 amd64; do
+            s "$IMAGE@$(cat "out/digest-$a")"
+            at "sbom-$a.spdx.json" "$IMAGE@$(cat "out/digest-$a")"
+          done
+          # The index carries the arm64 SBOM (target nodes); each platform image carries its own.
+          at sbom-arm64.spdx.json "$IMAGE@$INDEX"
+      - name: Verify signatures and SBOM attestations against cosign.pub
+        env:
+          INDEX: ${{ steps.index.outputs.digest }}
+        run: |
+          set -euo pipefail
+          for ref in "$IMAGE@$INDEX" "$IMAGE@$(cat out/digest-arm64)" "$IMAGE@$(cat out/digest-amd64)"; do
+            cosign verify --key ragfit/cosign.pub --insecure-ignore-tlog=true "$ref" > /dev/null
+            cosign verify-attestation --type spdxjson --key ragfit/cosign.pub --insecure-ignore-tlog=true "$ref" > /dev/null
+          done
+          echo "signatures and attestations verified for $IMAGE@$INDEX and both platform images"
       - name: Source tarball (AGPL corresponding source)
         run: git archive --format=tar.gz --prefix="ragfit-monitor-$REF_NAME/" -o source.tar.gz HEAD
       - name: Release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DIGEST: ${{ steps.build.outputs.digest }}
+          INDEX: ${{ steps.index.outputs.digest }}
         run: |
-          tar -czf licenses.tar.gz -C dist licenses
-          gh release create "$REF_NAME" sbom.spdx.json source.tar.gz licenses.tar.gz --notes "Upstream $UPSTREAM_VERSION. Image digest $DIGEST."
+          set -euo pipefail
+          notes="Upstream $UPSTREAM_VERSION. Image digest $INDEX (multi-arch index: linux/arm64 $(cat out/digest-arm64), linux/amd64 $(cat out/digest-amd64)). Signed and SBOM-attested with the key in ragfit/cosign.pub, without a transparency log entry."
+          gh release create "$REF_NAME" sbom-arm64.spdx.json sbom-amd64.spdx.json source.tar.gz \
+            out/licenses-arm64.tar.gz out/licenses-amd64.tar.gz ragfit/cosign.pub --notes "$notes"
