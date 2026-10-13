@@ -6,7 +6,7 @@ export PLUGINS_ALLOWLIST="$tmp/allow.txt"
 printf '# test\nexample-app 1.0.0 x x Apache-2.0\nexample-nested-panel 1.0.0 x x Apache-2.0\n' > "$PLUGINS_ALLOWLIST"
 mk() { mkdir -p "$(dirname "$1")"; printf '{"id":"%s","info":{"version":"%s"}}\n' "$2" "$3" > "$1"; }
 fail=0
-run() { # name expected-exit dir
+run() { # name expected-exit dir (REQUIRE_PINNED is passed through)
   ragfit/scripts/check-plugins.sh --dir "$3" > "$tmp/out" 2>&1; got=$?
   if [ "$got" -eq "$2" ]; then echo "ok   $1"; else echo "FAIL $1 (exit $got, want $2)"; cat "$tmp/out"; fail=1; fi
 }
@@ -40,4 +40,7 @@ mkdir -p "$tmp/c11/example-app"; echo '{"id": "example-app", "info": ' > "$tmp/c
 run "broken plugin.json fails" 1 "$tmp/c11"
 mkdir -p "$tmp/c12/example-app"; echo '["example-app"]' > "$tmp/c12/example-app/plugin.json"
 run "non-object plugin.json fails" 1 "$tmp/c12"
+REQUIRE_PINNED=1 run "required: all pinned present passes" 0 "$tmp/c2"
+REQUIRE_PINNED=1 run "required: pinned plugin missing fails" 1 "$tmp/c1"
+REQUIRE_PINNED=1 run "required: empty dir fails" 1 "$tmp/c8"
 exit $fail

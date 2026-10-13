@@ -13,6 +13,10 @@ jobs:
       - name: Build image (no push)
         env:
           COMMIT_SHA: ${{ github.sha }}
-        run: docker build -t ragfit-monitor:ci --build-arg JS_PLATFORM=linux/arm64 --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss --build-arg COMMIT_SHA="$COMMIT_SHA" .
-      - name: Plugin allowlist check
-        run: ragfit/scripts/check-plugins.sh ragfit-monitor:ci
+        run: docker build -t ragfit-monitor-base:ci --build-arg JS_PLATFORM=linux/arm64 --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss --build-arg COMMIT_SHA="$COMMIT_SHA" .
+      - name: Fetch pinned plugins (checksum-verified)
+        run: ragfit/scripts/fetch-plugins.sh arm64 dist/plugins
+      - name: Bake plugins into the image
+        run: docker build -f ragfit/docker/Dockerfile.plugins --build-arg BASE_IMAGE=ragfit-monitor-base:ci -t ragfit-monitor:ci dist/plugins
+      - name: Plugin allowlist check (all pinned plugins present)
+        run: REQUIRE_PINNED=1 ragfit/scripts/check-plugins.sh ragfit-monitor:ci

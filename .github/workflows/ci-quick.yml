@@ -29,6 +29,14 @@ jobs:
         run: ragfit/scripts/test-check-plugins.sh
       - name: Plugin pins (version, checksum, license)
         run: ragfit/scripts/verify-plugin-pins.sh
+      - name: Plugin bake smoke test (both architectures, stand-in base image)
+        run: |
+          ragfit/scripts/fetch-plugins.sh amd64 dist/plugins-amd64
+          ragfit/scripts/fetch-plugins.sh arm64 dist/plugins-arm64
+          printf 'FROM alpine:3.22\nRUN mkdir -p /var/lib/grafana/plugins /usr/share/grafana/data/plugins-bundled\n' | docker build -t bake-base:test -
+          docker build -f ragfit/docker/Dockerfile.plugins --build-arg BASE_IMAGE=bake-base:test -t bake:test dist/plugins-amd64
+          REQUIRE_PINNED=1 ragfit/scripts/check-plugins.sh bake:test
+          test "$(docker run --rm bake:test stat -c '%u' /usr/share/grafana/data/plugins-bundled/yesoreyeram-infinity-datasource/plugin.json)" = 472
       - name: OAuth role mapping (full team claim only, deny by default)
         run: |
           python3 -m pip install --quiet jmespath==1.0.1
