@@ -1,0 +1,20 @@
+# Example values for template checks only (reserved example domain, dummy digest).
+image:
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+rootUrl: https://monitor.example.invalid/
+sourceUrl: https://source.example.invalid
+oauth:
+  existingSecret: ragfit-monitor-oauth
+provisioning:
+  datasources: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        uid: prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.example.invalid:9090
+        editable: false
+  dashboards:
+    example.json: |
+      {"uid": "example", "title": "Example", "panels": []}

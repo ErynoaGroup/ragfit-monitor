@@ -1,0 +1,46 @@
+# Neutral defaults only. Real values (domains, digests, secrets, dashboards) are private.
+image:
+  repository: ghcr.io/erynoagroup/ragfit-monitor
+  # Required: deploy by digest only (sha256:...). Tags are not accepted.
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Required: public base URL of this instance and of RagFit | Source.
+rootUrl: ""
+sourceUrl: ""
+
+oauth:
+  # Required: existing Secret with keys client_id and client_secret.
+  existingSecret: ""
+
+persistence:
+  enabled: true
+  existingClaim: ""
+  size: 2Gi
+  storageClassName: ""
+
+# Optional provisioning, supplied by the private values.
+provisioning:
+  # Content of a datasources provisioning file (YAML string).
+  datasources: ""
+  # Map of file name to dashboard JSON (string).
+  dashboards: {}
+
+# Extra GF_* environment variables. Plugin installs at runtime are rejected by the template.
+extraEnv: []
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

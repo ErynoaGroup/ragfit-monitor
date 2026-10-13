@@ -29,3 +29,16 @@ There is no password login in the UI. In an emergency, run inside the pod:
 Then re-enable password login temporarily through the deployment
 (`GF_AUTH_DISABLE_LOGIN=false`, `GF_AUTH_DISABLE_LOGIN_FORM=false`), fix the problem,
 and revert both settings. Both steps go through a reviewed change in the deployment repository.
+
+## Helm chart
+
+`helm/ragfit-monitor` contains the deployment templates. The values (domains, image digest,
+secret names, datasources, dashboards) are supplied by the private deployment repository.
+
+- Required values: `image.digest` (`sha256:…`, tags are not accepted), `rootUrl`, `sourceUrl`
+  (both `https://`), `oauth.existingSecret` (keys `client_id`, `client_secret`).
+- `files/grafana.ini` is a copy of `grafana.ini` in this directory; CI checks that both are identical.
+- Plugins are baked into the image. `GF_INSTALL_PLUGINS`/`GF_PLUGINS_PREINSTALL*` and
+  sign-in overrides in `extraEnv` make rendering fail.
+- Dashboards are file-provisioned with `disableDeletion: true` and `allowUiUpdates: false`.
+- `ragfit/scripts/test-helm.sh` runs lint, render and guard checks with `ci/example-values.yaml`.

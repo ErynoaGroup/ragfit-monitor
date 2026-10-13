@@ -39,6 +39,8 @@ jobs:
           docker build -f ragfit/docker/Dockerfile.plugins --build-arg BASE_IMAGE=bake-base:test -t bake:test dist/plugins-amd64
           REQUIRE_PINNED=1 ragfit/scripts/check-plugins.sh bake:test
           test "$(docker run --rm bake:test stat -c '%u' /usr/share/grafana/data/plugins-bundled/yesoreyeram-infinity-datasource/plugin.json)" = 472
+      - name: Deployment templates (helm lint, render, guards)
+        run: ragfit/scripts/test-helm.sh
       - name: OAuth role mapping (full team claim only, deny by default)
         run: |
           python3 -m pip install --quiet jmespath==1.0.1
