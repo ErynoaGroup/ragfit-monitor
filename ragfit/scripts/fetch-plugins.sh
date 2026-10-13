@@ -5,6 +5,20 @@
 # The output directory is baked into the image as /usr/share/grafana/data/plugins-bundled,
 # so nothing is installed at runtime.
 set -euo pipefail
+
+# Every entry must sit under <id>/ (compared as a fixed string, not a regex),
+# no entry may contain "../" and no entry may be a symlink.
+check_zip() {
+  local zip="$1" id="$2" names long
+  names=$(zipinfo -1 "$zip") || { echo "UNREADABLE package for $id"; return 1; }
+  long=$(zipinfo "$zip") || { echo "UNREADABLE package for $id"; return 1; }
+  if cut -d/ -f1 <<< "$names" | grep -vxF -- "$id" | grep -q .; then echo "UNEXPECTED PATH in $id package"; return 1; fi
+  if grep -qF -- '../' <<< "$names"; then echo "PATH TRAVERSAL in $id package"; return 1; fi
+  if grep -q '^l' <<< "$long"; then echo "SYMLINK in $id package"; return 1; fi
+}
+# Test hook: fetch-plugins.sh --check-zip <zip> <id>
+if [ "${1:-}" = "--check-zip" ]; then check_zip "${2:?zip}" "${3:?id}"; exit $?; fi
+
 ARCH="${1:?arch (arm64|amd64)}"; OUT="${2:?output dir}"
 ALLOW="${PLUGINS_ALLOWLIST:-ragfit/plugins-allowlist.txt}"
 case "$ARCH" in arm64) col=3 ;; amd64) col=4 ;; *) echo "unsupported arch: $ARCH"; exit 1 ;; esac
@@ -17,10 +31,7 @@ while read -r line; do
   curl -fsSL --retry 3 "https://grafana.com/api/plugins/$id/versions/$ver/download?os=linux&arch=$ARCH" -o "$zip"
   got=$(sha256sum "$zip" | cut -d' ' -f1)
   [ "$got" = "$want" ] || { echo "CHECKSUM MISMATCH: $id $ver linux-$ARCH got $got, pinned $want"; exit 1; }
-  # Every entry must stay inside <id>/ and no entry may be a symlink.
-  if zipinfo -1 "$zip" | grep -v "^$id/" | grep -q .; then echo "UNEXPECTED PATH in $id package"; exit 1; fi
-  if zipinfo -1 "$zip" | grep -q '\.\./'; then echo "PATH TRAVERSAL in $id package"; exit 1; fi
-  if zipinfo "$zip" | grep -q '^l'; then echo "SYMLINK in $id package"; exit 1; fi
+  check_zip "$zip" "$id"
   unzip -q "$zip" -d "$OUT"
   echo "verified and unpacked: $id $ver linux-$ARCH $got"
 done < <(grep -v '^#' "$ALLOW" | grep .)
