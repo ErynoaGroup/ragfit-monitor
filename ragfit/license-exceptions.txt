@@ -8,3 +8,4 @@ go.opentelemetry.io/otel/exporters/jaeger/internal/third_party/thrift/lib/go/thr
 github.com/jmespath/go-jmespath Apache-2.0 (repository license), no license file detected in the module copy
 github.com/segmentio/asm MIT-0 (repository license), not detected by the classifier
 github.com/grafana/nanogit/gittest Apache-2.0 (repository license), test helper package
+yesoreyeram-infinity-datasource Apache-2.0 (LICENSE in the 3.11.1 package, public source), AGPL-3.0 compatible; runtime plugin, not a Go dependency; pinned in ragfit/plugins-allowlist.txt

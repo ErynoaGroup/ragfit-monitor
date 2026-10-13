@@ -1,8 +1,45 @@
 #!/usr/bin/env bash
-# Fails if the repository config preinstalls plugins, or if the given image
-# contains a plugin ID that is not in ragfit/plugins-allowlist.txt.
+# Plugin policy check.
+#   check-plugins.sh                 config check only (no preinstalled plugins)
+#   check-plugins.sh <image>         config check, then every plugin.json in the image's plugin dirs
+#   check-plugins.sh --dir <path>... check every plugin.json under the given directories
+# Every plugin.json, top-level or nested inside another plugin, must have an id and
+# version pinned in ragfit/plugins-allowlist.txt (override with PLUGINS_ALLOWLIST).
+# Symlinks inside plugin directories and unparseable plugin.json files fail the check.
 set -euo pipefail
-ALLOW=ragfit/plugins-allowlist.txt
+ALLOW="${PLUGINS_ALLOWLIST:-ragfit/plugins-allowlist.txt}"
+
+check_dirs() {
+  local d links found bad=0 id ver pin file
+  for d in "$@"; do
+    [ -d "$d" ] || { echo "NOT A DIRECTORY: $d"; return 1; }
+    # Symlinks could hide a disallowed plugin from the scan; they are not allowed at all.
+    links=$(find "$d" -type l)
+    if [ -n "$links" ]; then
+      echo "SYMLINK NOT ALLOWED in plugin directory:"; echo "$links"; bad=1
+    fi
+  done
+  found=$(find "$@" -type f -name plugin.json | sort)
+  if [ -z "$found" ]; then
+    [ "$bad" -eq 0 ] && echo "no external plugins found"
+    return $bad
+  fi
+  while read -r file; do
+    if ! jq -e 'type == "object"' "$file" > /dev/null 2>&1; then
+      echo "INVALID plugin.json (not a JSON object): $file"; bad=1; continue
+    fi
+    id=$(jq -r '.id // ""' "$file"); ver=$(jq -r '.info.version // ""' "$file")
+    if [ -z "$id" ]; then echo "NO ID: $file"; bad=1; continue; fi
+    pin=$(grep -v '^#' "$ALLOW" | awk -v i="$id" '$1==i {print $2}')
+    if [ -z "$pin" ]; then echo "NOT ALLOWED: $id ($file)"; bad=1
+    elif [ "$pin" != "$ver" ]; then echo "VERSION MISMATCH: $id $ver, pinned $pin ($file)"; bad=1
+    else echo "allowed: $id $ver ($file)"; fi
+  done <<< "$found"
+  return $bad
+}
+
+if [ "${1:-}" = "--dir" ]; then shift; check_dirs "$@"; exit $?; fi
+
 for key in preinstall preinstall_sync preinstall_async; do
   val=$(grep -E "^${key}[[:space:]]*=" conf/defaults.ini | head -1 | cut -d= -f2- | tr -d '[:space:]' || true)
   [ -z "$val" ] || { echo "conf/defaults.ini: $key must be empty, found: $val"; exit 1; }
@@ -12,12 +49,6 @@ IMAGE="${1:-}"
 tmp=$(mktemp -d); cid=$(docker create "$IMAGE")
 trap 'docker rm -f "$cid" >/dev/null; rm -rf "$tmp"' EXIT
 for d in /usr/share/grafana/data/plugins-bundled /var/lib/grafana/plugins; do
-  mkdir -p "$tmp$d"; docker cp "$cid:$d/." "$tmp$d" 2>/dev/null || true
+  mkdir -p "$tmp$d"; docker cp "$cid:$d/." "$tmp$d"
 done
-ids=$(find "$tmp" -name plugin.json -exec jq -r '.id // empty' {} + | sort -u)
-bad=0
-for id in $ids; do
-  if grep -qxF "$id" <(grep -v '^#' "$ALLOW"); then echo "allowed: $id"; else echo "NOT ALLOWED: $id"; bad=1; fi
-done
-[ -n "$ids" ] || echo "no external plugins in image"
-exit $bad
+check_dirs "$tmp/usr/share/grafana/data/plugins-bundled" "$tmp/var/lib/grafana/plugins"
