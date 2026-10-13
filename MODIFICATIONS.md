@@ -19,4 +19,5 @@ Each modified upstream file additionally carries the header line
 | 2026-10-13 | Imported upstream tree at v13.2.4 | all | Base of this repository |
 | 2026-10-13 | Removed upstream `.github/` directory (workflows, CODEOWNERS, issue templates, bot configs) | `.github/**` | Upstream automation must not run in this repository; own CI follows in a separate change |
 | 2026-10-13 | Replaced `README.md` | `README.md` | Product README for RagFit Monitor; upstream marks are not used outside LICENSE, NOTICE and this file |
+| 2026-10-13 | Added own CI and release tooling (no upstream file changed) | `.github/workflows/*`, `ragfit/**` | Policy checks, reviewed license exceptions, license bundle with THIRD_PARTY_NOTICES under /licenses in the image, plugin allowlist, GHCR release signed keyless and verified, SBOM attestation |
 | 2026-10-13 | Added this file | `MODIFICATIONS.md` | Change notice per AGPL-3.0 §5(a) |
