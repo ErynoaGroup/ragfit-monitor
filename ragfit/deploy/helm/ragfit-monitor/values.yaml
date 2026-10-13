@@ -33,8 +33,19 @@ provisioning:
 
 # Extra environment variables, allowlist only: GF_LOG_*, GF_ANALYTICS_*, GF_DATABASE_*, GF_METRICS_*,
 # and DS_* for datasource values. Sign-in, security, server, paths, plugins and users settings are
-# fixed by the chart; overriding them makes rendering fail. Use valueFrom.secretKeyRef for secrets.
+# fixed by the chart; overriding them makes rendering fail. Names ending in _PASSWORD, _TOKEN, _SECRET
+# or _KEY must use valueFrom.secretKeyRef; a plain value makes rendering fail.
 extraEnv: []
+
+# Optional NetworkPolicy. When enabled, ingress to the http port is allowed only from ingressFrom
+# (NetworkPolicy peers, e.g. the ingress controller's namespace). Egress stays open unless
+# egress.enabled is true; then only DNS and the rules in egress.rules are allowed.
+networkPolicy:
+  enabled: false
+  ingressFrom: []
+  egress:
+    enabled: false
+    rules: []
 
 service:
   type: ClusterIP

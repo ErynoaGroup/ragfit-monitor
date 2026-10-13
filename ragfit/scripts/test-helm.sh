@@ -51,4 +51,29 @@ for k in GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH GF_AUTH_GENERIC_OAUTH_ALLOWED
          GF_FEATURE_TOGGLES_ENABLE GF_RENDERING_SERVER_URL RAGFIT_SOURCE_URL PATH; do env_fail "$k"; done
 expect_ok "extraEnv GF_LOG_LEVEL renders" --set 'extraEnv[0].name=GF_LOG_LEVEL' --set 'extraEnv[0].value=info'
 expect_ok "extraEnv GF_DATABASE_TYPE renders" --set 'extraEnv[0].name=GF_DATABASE_TYPE' --set 'extraEnv[0].value=sqlite3'
+# Credentials in extraEnv only via secretKeyRef (own values file: --set would merge into the example list)
+envf=$(mktemp); trap 'rm -f "$envf"' EXIT
+env_case() { # name expect(ok|fail) yaml-list-item
+  printf 'extraEnv:\n  - %s\n' "$3" > "$envf"
+  if helm template t "$c" -f "$v" -f "$envf" > /dev/null 2>&1; then r=ok; else r=fail; fi
+  [ "$r" = "$2" ] && ok "$1" || bad "$1 (got $r)"
+}
+for k in DS_PROM_PASSWORD DS_API_TOKEN DS_CLIENT_SECRET DS_API_KEY GF_DATABASE_PASSWORD; do
+  env_case "extraEnv $k with a plain value fails" fail "{name: $k, value: x}"
+  env_case "extraEnv $k with configMapKeyRef fails" fail "{name: $k, valueFrom: {configMapKeyRef: {name: c, key: k}}}"
+  env_case "extraEnv $k with secretKeyRef renders" ok "{name: $k, valueFrom: {secretKeyRef: {name: s, key: k}}}"
+done
+env_case "extraEnv credential with both value and secretKeyRef fails" fail "{name: DS_API_TOKEN, value: x, valueFrom: {secretKeyRef: {name: s, key: k}}}"
+env_case "extraEnv credential with an empty value fails" fail "{name: DS_API_TOKEN, value: ''}"
+env_case "extraEnv DS_KEYSPACE (no credential suffix) renders" ok "{name: DS_KEYSPACE, value: x}"
+
+# NetworkPolicy
+helm template t "$c" -f "$v" | grep -q '^kind: NetworkPolicy' && bad "NetworkPolicy off by default" || ok "NetworkPolicy off by default"
+expect_fail "NetworkPolicy without ingressFrom fails" --set networkPolicy.enabled=true
+np=$(helm template t "$c" -f "$v" --set networkPolicy.enabled=true --set 'networkPolicy.ingressFrom[0].namespaceSelector.matchLabels.name=ingress' 2>/dev/null)
+grep -q '^kind: NetworkPolicy' <<< "$np" && ok "NetworkPolicy renders when enabled" || bad "NetworkPolicy renders when enabled"
+grep -q -- '- Egress' <<< "$np" && bad "egress open by default" || ok "egress open by default"
+npe=$(helm template t "$c" -f "$v" --set networkPolicy.enabled=true --set 'networkPolicy.ingressFrom[0].podSelector.matchLabels.app=proxy' --set networkPolicy.egress.enabled=true 2>/dev/null)
+grep -q -- '- Egress' <<< "$npe" && grep -q 'port: 53' <<< "$npe" && ok "egress restricted with DNS allowed" || bad "egress restricted with DNS allowed"
+helm lint "$c" -f "$v" --set networkPolicy.enabled=true --set 'networkPolicy.ingressFrom[0].podSelector.matchLabels.app=proxy' --set networkPolicy.egress.enabled=true > /dev/null && ok "helm lint with NetworkPolicy" || bad "helm lint with NetworkPolicy"
 exit $fail
