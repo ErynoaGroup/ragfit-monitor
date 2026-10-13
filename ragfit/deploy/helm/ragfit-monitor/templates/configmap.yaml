@@ -1,0 +1,33 @@
+{{- include "ragfit-monitor.validate" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ragfit-monitor.name" . }}-config
+  labels: {{- include "ragfit-monitor.labels" . | nindent 4 }}
+data:
+  grafana.ini: |
+{{ .Files.Get "files/grafana.ini" | indent 4 }}
+  dashboard-provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: default
+        type: file
+        disableDeletion: true
+        allowUiUpdates: false
+        options:
+          path: /var/lib/grafana/dashboards
+{{- with .Values.provisioning.datasources }}
+  datasources.yaml: |
+{{ . | indent 4 }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ragfit-monitor.name" . }}-dashboards
+  labels: {{- include "ragfit-monitor.labels" . | nindent 4 }}
+data:
+{{- range $file, $json := .Values.provisioning.dashboards }}
+  {{ $file }}: |
+{{ $json | indent 4 }}
+{{- end }}
