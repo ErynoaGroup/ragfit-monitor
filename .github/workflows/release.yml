@@ -43,10 +43,14 @@ jobs:
             --build-arg COMMIT_SHA="$COMMIT_SHA" \
             --build-arg JS_PLATFORM=linux/arm64 \
             --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss .
+      - name: Fetch pinned plugins (checksum-verified)
+        run: ragfit/scripts/fetch-plugins.sh arm64 dist/plugins
+      - name: Bake plugins into the image
+        run: docker build -f ragfit/docker/Dockerfile.plugins --build-arg BASE_IMAGE=ragfit-monitor-base:ci -t ragfit-monitor-plugins:ci dist/plugins
       - name: Add /licenses and labels
         run: |
           docker build -f ragfit/docker/Dockerfile.licenses \
-            --build-arg BASE_IMAGE=ragfit-monitor-base:ci \
+            --build-arg BASE_IMAGE=ragfit-monitor-plugins:ci \
             --label org.opencontainers.image.version="$REF_NAME" \
             --label org.opencontainers.image.revision="$COMMIT_SHA" \
             --label org.opencontainers.image.source="https://github.com/$REPOSITORY" \
@@ -54,7 +58,7 @@ jobs:
             --label io.ragfit.upstream.version="$UPSTREAM_VERSION" \
             -t "$IMAGE:$REF_NAME" dist/licenses
       - name: Plugin allowlist check on the built image
-        run: ragfit/scripts/check-plugins.sh "$IMAGE:$REF_NAME"
+        run: REQUIRE_PINNED=1 ragfit/scripts/check-plugins.sh "$IMAGE:$REF_NAME"
       - id: build
         name: Push and resolve digest
         run: |

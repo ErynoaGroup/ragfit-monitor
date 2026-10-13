@@ -1,0 +1,6 @@
+# Bakes the checksum-verified plugins into the upstream-built image without patching
+# the upstream Dockerfile. Build context is the output of ragfit/scripts/fetch-plugins.sh.
+# plugins-bundled sits under the install path, so a volume on /var/lib/grafana cannot hide it.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY --chown=472:0 . /usr/share/grafana/data/plugins-bundled/

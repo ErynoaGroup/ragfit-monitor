@@ -6,11 +6,12 @@
 # Every plugin.json, top-level or nested inside another plugin, must have an id and
 # version pinned in ragfit/plugins-allowlist.txt (override with PLUGINS_ALLOWLIST).
 # Symlinks inside plugin directories and unparseable plugin.json files fail the check.
+# REQUIRE_PINNED=1 also fails when a pinned plugin is missing (used on the release image).
 set -euo pipefail
 ALLOW="${PLUGINS_ALLOWLIST:-ragfit/plugins-allowlist.txt}"
 
 check_dirs() {
-  local d links found bad=0 id ver pin file
+  local d links found bad=0 id ver pin file seen=""
   for d in "$@"; do
     [ -d "$d" ] || { echo "NOT A DIRECTORY: $d"; return 1; }
     # Symlinks could hide a disallowed plugin from the scan; they are not allowed at all.
@@ -20,11 +21,9 @@ check_dirs() {
     fi
   done
   found=$(find "$@" -type f -name plugin.json | sort)
-  if [ -z "$found" ]; then
-    [ "$bad" -eq 0 ] && echo "no external plugins found"
-    return $bad
-  fi
+  [ -n "$found" ] || echo "no external plugins found"
   while read -r file; do
+    [ -n "$file" ] || continue
     if ! jq -e 'type == "object"' "$file" > /dev/null 2>&1; then
       echo "INVALID plugin.json (not a JSON object): $file"; bad=1; continue
     fi
@@ -33,8 +32,13 @@ check_dirs() {
     pin=$(grep -v '^#' "$ALLOW" | awk -v i="$id" '$1==i {print $2}')
     if [ -z "$pin" ]; then echo "NOT ALLOWED: $id ($file)"; bad=1
     elif [ "$pin" != "$ver" ]; then echo "VERSION MISMATCH: $id $ver, pinned $pin ($file)"; bad=1
-    else echo "allowed: $id $ver ($file)"; fi
+    else echo "allowed: $id $ver ($file)"; seen="$seen $id"; fi
   done <<< "$found"
+  if [ "${REQUIRE_PINNED:-0}" = "1" ]; then
+    for id in $(grep -v '^#' "$ALLOW" | awk 'NF {print $1}'); do
+      case " $seen " in *" $id "*) ;; *) echo "MISSING pinned plugin: $id"; bad=1 ;; esac
+    done
+  fi
   return $bad
 }
 
