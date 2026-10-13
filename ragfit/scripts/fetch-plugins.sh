@@ -37,5 +37,5 @@ while read -r line; do
   check_zip "$zip" "$id"
   unzip -q "$zip" -d "$OUT"
   echo "verified and unpacked: $id $ver linux-$ARCH $got"
-done < <(grep -v '^#' "$ALLOW" | grep .)
+done < <(grep -v '^#' "$ALLOW" | awk 'NF && $5 != "LicenseRef-proprietary"')
 REQUIRE_PINNED=1 "$(dirname "$0")/check-plugins.sh" --dir "$OUT"

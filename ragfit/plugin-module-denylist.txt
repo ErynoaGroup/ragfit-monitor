@@ -1,0 +1,12 @@
+# Go module paths that a proprietary (sdk-only) backend plugin must not contain.
+# A line matches the module itself and every module below it ("<path>/..."), never a sibling
+# with the same prefix (github.com/grafana/grafana does not match github.com/grafana/grafana-plugin-sdk-go).
+# These modules are AGPL-3.0 (server code); a proprietary plugin may only use grafana-plugin-sdk-go
+# (Apache-2.0) and other permissively licensed libraries.
+github.com/grafana/grafana
+github.com/grafana/alerting
+github.com/grafana/schemads
+github.com/grafana/loki
+github.com/grafana/mimir
+github.com/grafana/tempo
+github.com/grafana/pyroscope
