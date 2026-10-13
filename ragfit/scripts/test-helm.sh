@@ -65,7 +65,19 @@ for k in DS_PROM_PASSWORD DS_API_TOKEN DS_CLIENT_SECRET DS_API_KEY GF_DATABASE_P
 done
 env_case "extraEnv credential with both value and secretKeyRef fails" fail "{name: DS_API_TOKEN, value: x, valueFrom: {secretKeyRef: {name: s, key: k}}}"
 env_case "extraEnv credential with an empty value fails" fail "{name: DS_API_TOKEN, value: ''}"
-env_case "extraEnv DS_KEYSPACE (no credential suffix) renders" ok "{name: DS_KEYSPACE, value: x}"
+# Broadened match: every named case with a plain value fails and renders with secretKeyRef.
+for k in GF_DATABASE_URL GF_DATABASE_PASSWORD GF_DATABASE_PASS GF_DATABASE_PASSWD DS_APIKEY DS_API_KEY DS_PASS DS_PASSWD \
+         DS_PROM_PASSWORD DS_TOKEN DS_ACCESS_TOKEN DS_SECRET DS_CLIENT_SECRET DS_KEY DS_CREDENTIAL DS_CREDENTIALS DS_AUTH \
+         DS_BASIC_AUTH DS_AUTHORIZATION DS_PROM_URL DS_PG_DSN DS_MONGO_URI DS_PG_CONNSTR DS_SQL_CONNECTION_STRING; do
+  env_case "extraEnv $k with a plain value fails" fail "{name: $k, value: x}"
+  env_case "extraEnv $k with secretKeyRef renders" ok "{name: $k, valueFrom: {secretKeyRef: {name: s, key: k}}}"
+done
+env_case "extraEnv DS_KEYSPACE needs secretKeyRef (broad match, fail closed)" fail "{name: DS_KEYSPACE, value: x}"
+# Harmless names still take plain values.
+for k in GF_LOG_LEVEL GF_LOG_MODE GF_DATABASE_TYPE GF_DATABASE_HOST GF_DATABASE_NAME GF_DATABASE_SSL_MODE \
+         GF_DATABASE_MAX_OPEN_CONN GF_METRICS_ENABLED GF_ANALYTICS_REPORTING_ENABLED DS_PROM_TIMEOUT DS_REGION DS_ORG_ID; do
+  env_case "extraEnv $k with a plain value renders" ok "{name: $k, value: x}"
+done
 
 # NetworkPolicy
 helm template t "$c" -f "$v" | grep -q '^kind: NetworkPolicy' && bad "NetworkPolicy off by default" || ok "NetworkPolicy off by default"

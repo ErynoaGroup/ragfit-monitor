@@ -23,9 +23,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- fail (printf "extraEnv %s is not allowed: %s* is fixed by the chart (sign-in, security, server, paths, plugins, users)" $n $p) -}}
 {{- end -}}
 {{- end -}}
-{{- if regexMatch "(_PASSWORD|_TOKEN|_SECRET|_KEY)$" $n -}}
+{{- /* Credential-like names: matched anywhere in the name on purpose (fail closed), plus URL/DSN names that can carry user:password. */ -}}
+{{- if or (regexMatch "(PASS|TOKEN|SECRET|KEY|CREDENTIAL|AUTH)" $n) (regexMatch "(_URL|_URI|_DSN|_CONNSTR|_CONNECTION_STRING)$" $n) -}}
 {{- if or (hasKey . "value") (not (dig "valueFrom" "secretKeyRef" "" .)) -}}
-{{- fail (printf "extraEnv %s looks like a credential: use valueFrom.secretKeyRef, not value" $n) -}}
+{{- fail (printf "extraEnv %s looks like a credential or a URL that can carry one: use valueFrom.secretKeyRef, not value" $n) -}}
 {{- end -}}
 {{- end -}}
 {{- if not (regexMatch "^(GF_(LOG|ANALYTICS|DATABASE|METRICS)_[A-Z0-9_]+|DS_[A-Z0-9_]+)$" $n) -}}
