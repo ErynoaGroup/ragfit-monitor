@@ -1,3 +1,4 @@
+// Modified by ErynoaGroup, 2026-10-13: expected login title for RagFit Monitor.
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
@@ -38,7 +39,7 @@ describe('Login Page', () => {
   it('renders correctly', () => {
     render(<LoginPage />);
 
-    expect(screen.getByRole('heading', { name: 'Welcome to Grafana' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome to RagFit | Monitor' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Email or username' })).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
