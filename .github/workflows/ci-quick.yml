@@ -25,6 +25,10 @@ jobs:
         run: "! grep -rniI 'based on grafana' README.md ragfit"
       - name: Plugin config check
         run: ragfit/scripts/check-plugins.sh
+      - name: OAuth role mapping (full team claim only, deny by default)
+        run: |
+          python3 -m pip install --quiet jmespath==1.0.1
+          python3 ragfit/scripts/test-role-mapping.py
       - name: Brand scan (report only until the branding patch lands)
         continue-on-error: true
         run: grep -rliI 'grafana' public/locales public/img | grep -v -x -f <(grep -v '^#' ragfit/brand-allowlist.txt) || true
