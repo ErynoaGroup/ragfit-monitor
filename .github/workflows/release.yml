@@ -45,6 +45,8 @@ jobs:
             --build-arg GO_BUILD_TAGS=oss --build-arg WIRE_TAGS=oss .
       - name: Fetch pinned plugins (checksum-verified)
         run: ragfit/scripts/fetch-plugins.sh arm64 dist/plugins
+      - name: Plugin license bundle (incl. Go modules in backend binaries)
+        run: ragfit/scripts/plugin-licenses.sh dist/plugins dist/licenses/plugins
       - name: Bake plugins into the image
         run: docker build -f ragfit/docker/Dockerfile.plugins --build-arg BASE_IMAGE=ragfit-monitor-base:ci -t ragfit-monitor-plugins:ci dist/plugins
       - name: Add /licenses and labels
