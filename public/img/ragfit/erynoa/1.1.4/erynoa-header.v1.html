@@ -1,14 +1,15 @@
 <!-- SPDX-License-Identifier: MIT -->
-<!-- Erynoa header v1.1.3. Placeholders, replaced by the app at render time (or use erynoa-header.v1.js):
+<!-- Erynoa header v1.1.4. Placeholders, replaced by the app at render time (or use erynoa-header.v1.js):
        __ERYNOA_DOMAIN__     base domain, e.g. derived from the app's own host by dropping the first label
        __ERH_HOME_URL__      logo link; default https://source.__ERYNOA_DOMAIN__/
        __ERH_SKIP_TARGET__   skip-link target; default #main
+       __ERH_ASSET_BASE__    URL of the versioned asset dir incl. trailing slash, e.g. /assets/erynoa/1.1.4/ (same origin)
      Optional: data-erh-theme="dark|light" on <header> forces the theme. Set aria-current="page"
      on the current service. Logo/name: see NOTICE.md (not MIT). -->
-<header class="erh" role="banner" data-erynoa-header="1.1.3">
+<header class="erh" role="banner" data-erynoa-header="1.1.4">
   <a class="erh-skip" href="__ERH_SKIP_TARGET__">Skip to content</a>
   <a class="erh-brand" href="__ERH_HOME_URL__" aria-label="Erynoa">
-    <span class="erh-logo" role="img" aria-label="Erynoa"></span>
+    <svg class="erh-logo" viewBox="0 0 1150 347" fill="currentColor" aria-hidden="true" focusable="false"><use href="__ERH_ASSET_BASE__erynoa-en-lockup.svg#monogram"/><use href="__ERH_ASSET_BASE__erynoa-en-lockup.svg#divider"/><use href="__ERH_ASSET_BASE__erynoa-en-lockup.svg#wordmark"/></svg>
   </a>
   <nav class="erh-nav" aria-label="RagFit services">
     <ul>

@@ -7,7 +7,7 @@ that embeds this header (e.g. RagFit | Plan).
 
 Redistributed or modified versions (forks) must remove the Erynoa name and logo
 unless Erynoa grants permission in writing. The MIT-licensed code works without
-them: replace `--erh-logo-url` and the `aria-label`s.
+them: replace the logo `<svg>` (and its `<use>` references) and the `aria-label`s.
 
 `erynoa-en-lockup.svg` is a byte-identical copy of
 `logos/erynoa/erynoa-en-lockup.svg` (canonical master, see `logos/INDEX.md`).
