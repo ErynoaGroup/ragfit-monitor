@@ -1,5 +1,14 @@
 # Changelog — Erynoa header
 
+## 1.1.3 — 2026-10-14
+- Fix (reported by RagFit | Plan): at 320px the focused Monitor link stayed partly cut off in Chrome, which
+  does not scroll a partially visible link on focus. Below 370px the spacing tightens further (link padding 3px,
+  12px text) so all six entries fit at 320–369px; focus-ring room at the nav edges (`padding-inline`, `scroll-margin-inline`).
+  The web component additionally calls `scrollIntoView({inline: "nearest"})` on `focusin` (narrower than 320px).
+  Verified with real Tab presses in headless Chrome at 320/360/375 (no JS) and 300 (JS): Monitor plus focus ring fully visible.
+- README: `--erh-z` is an official customization (Gitea-like hosts with backdrops at 1000 may use 900);
+  versioned self-hosted path may vary per framework; light-only UIs set `data-erh-theme="light"`.
+
 ## 1.1.2 — 2026-10-14
 - New nav entry **Monitor** (`monitor.<domain>`, `current="monitor"`) after Auth, in HTML partial and web component.
 - Narrow phones: below 400px tighter spacing (link padding 5px, 13px text, 16px logo, gap 4px); all six entries fit at 375 and 360px.

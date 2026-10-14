@@ -52,7 +52,7 @@ jobs:
         run: |
           python3 -m pip install --quiet jmespath==1.0.1
           python3 ragfit/scripts/test-role-mapping.py
-      - name: Erynoa header 1.1.2 (bundled SHA256SUMS, file set, markup in index.html)
+      - name: Erynoa header 1.1.3 (bundled SHA256SUMS, file set, markup in index.html)
         run: ragfit/scripts/check-erynoa-header.sh
       - name: Erynoa header check tests
         run: ragfit/scripts/test-check-erynoa-header.sh
