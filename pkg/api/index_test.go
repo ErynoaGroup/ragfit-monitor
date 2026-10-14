@@ -1,3 +1,5 @@
+// Modified by ErynoaGroup, 2026-10-14: test for the Erynoa header base domain.
+
 package api
 
 import (
@@ -140,5 +142,21 @@ func TestIntegrationSetIndexViewData_clientNavTree(t *testing.T) {
 				assert.Contains(t, string(navTreeJSON), "Dashboards")
 			}
 		})
+	}
+}
+
+func TestErynoaBaseDomain(t *testing.T) {
+	for in, want := range map[string]string{
+		"https://monitor.example.org/":       "example.org",
+		"https://monitor.a.example.org:3000": "a.example.org",
+		"http://localhost:3000/":             "",
+		"https://example.org/":               "",
+		"https://10.1.2.3/":                  "",
+		"https://[::1]:3000/":                "",
+		"https://monitor..example.org/":      "",
+		"":                                   "",
+		"::not a url":                        "",
+	} {
+		assert.Equal(t, want, erynoaBaseDomain(in), in)
 	}
 }

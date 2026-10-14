@@ -1,4 +1,5 @@
 // Modified by ErynoaGroup, 2026-10-13: product title and neutral icon placeholders.
+// Modified by ErynoaGroup, 2026-10-14: Erynoa header base domain and skip link target.
 
 package api
 
@@ -8,7 +9,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -205,6 +208,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 		NewPreferencesPage:                  newPreferencesPage,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		ErynoaDomain:                        erynoaBaseDomain(appURL),
+		ErynoaSkipHref:                      c.Req.URL.EscapedPath() + "#pageContent",
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -333,4 +338,30 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	}
 
 	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
+}
+
+// erynoaBaseDomain returns the host of appURL without its first label (monitor.example.org ->
+// example.org), the same rule as the Erynoa header's web component. It fails closed: when no base
+// domain can be derived (unparseable or empty URL, IP address, or a host with fewer than three
+// labels such as localhost) it returns "" and the page renders no header. No domain is configured
+// in the repository.
+func erynoaBaseDomain(appURL string) string {
+	u, err := url.Parse(appURL)
+	if err != nil {
+		return ""
+	}
+	h := u.Hostname()
+	if h == "" || net.ParseIP(h) != nil {
+		return ""
+	}
+	parts := strings.Split(h, ".")
+	if len(parts) < 3 {
+		return ""
+	}
+	for _, p := range parts {
+		if p == "" {
+			return ""
+		}
+	}
+	return strings.Join(parts[1:], ".")
 }
