@@ -34,6 +34,14 @@ Helper used below (the session cookie is read from a file under `$tmp`, never fr
 repository). How the operator obtains the SSO session cookie (browser developer tools into a file
 under `$tmp`, or an equivalent private procedure) is described in the private deployment repository.
 
+## Order and dependencies
+- **MO6 → MO7 → MO5.** The OAuth app (MO6) and its Secret must exist before the cutover to RagFit
+  Monitor (MO7, [runbook-cutover-mo7.md](runbook-cutover-mo7.md)), because the image has no password
+  login. MO5 needs an Admin through SSO with the role mapping, which only exists after MO7.
+- A hostname change of the instance is a separate device action, planned in the private deploy repo. It changes
+  `<monitor-root-url>` and therefore the MO6 redirect URI (see MO6, *Hostname change*).
+- None of these procedures is run from this repository or by CI. Each one needs its own slot.
+
 ---
 
 ## MO5: revoke a service account
@@ -49,6 +57,8 @@ issued.
 - A fresh, verified database backup (see the rollback note below).
 - A list of consumers of the account (dashboards, automations) and confirmation that they are stopped
   or moved. Consumers that still use the token will fail with 401 after the step.
+- Run by the operator in an assigned slot. The account's name may appear in the private slot log only; this
+  repository and public tickets use `<sa-id>`.
 
 ### Steps
 1. Set up `$tmp`, the `trap` and the `api` helper; put the session cookie into `$tmp/session`.
@@ -63,6 +73,9 @@ issued.
        jq -r '.id, .login, .role' "$tmp/out"
        api GET /api/serviceaccounts/<sa-id>/tokens
        jq -r 'length' "$tmp/out"                  # number of tokens only
+       jq -r '.[] | [.id, .lastUsedAt, .expiration] | @tsv' "$tmp/out"   # no token values
+
+   If a token was used after the consumers were reported stopped, abort: a consumer is still active.
 
 4. Delete the account (this deletes its tokens):
 
@@ -73,6 +86,7 @@ issued.
 - The old token is rejected: the person or system that held the token runs one read call with it, from
   a file and through `curl -K -`, and gets **401**. The token itself is never handed to the operator.
 - Negative test: basic auth with `admin:invalid` against `GET /api/org` returns **401**.
+- `api GET /api/serviceaccounts/search?query=<sa-login>` does not list the account.
 - Record date, time, operator and the HTTP codes in the slot log.
 
 ### Rollback
@@ -121,6 +135,20 @@ is the only write.
      `ErynoaGroup:<team>` claims, `role_attribute_strict = true`
    - `auth_url`, `token_url`, `api_url` built from the Source base URL at runtime
 5. Deploy the Secret and the configuration through the normal reviewed deployment path.
+6. Record in the slot log: app name, owner, creation time, redirect URI (as `<monitor-root-url>/…`
+   placeholder in public places), and where the secret is stored. Never the client secret.
+
+### Hostname change
+The redirect URI is an exact match. When the hostname of the instance changes, the
+app's redirect URI and `rootUrl` change in the same slot: add the new URI in Source, deploy the new
+`rootUrl`, verify sign-in on the new name, then remove the old URI. No redirect from the old name is
+kept, so the old URI has no use afterwards.
+
+**On hold by the owner** (date in the private deploy repo). The deployment reconciler does not patch an existing
+Source OAuth app; it only checks for drift. Changing `redirect_uris` needs a run with
+a rotate flag (`<rotate-flag>`), which makes Source issue a **new client secret** into the client
+Secret (`<namespace>/<oidc-secret>`) and then requires a Grafana restart to pick it up. This is a secret
+action: it runs only after the owner's explicit OK, in an assigned slot, and is recorded in the slot log.
 
 ### Verification
 - A member of an admin team signs in through Source and `GET /api/user/orgs` (with that session) shows
@@ -130,6 +158,9 @@ is the only write.
   a valid session returns **401**, a call above the user's role returns **403**.
 - `admin:invalid` basic auth returns **401**.
 - The redirect URI in Source matches exactly; a changed redirect is rejected by Source.
+- The authorization request carries `code_challenge_method=S256` (PKCE active), visible in the
+  browser's network panel; the token request authenticates the client in the header.
+- Signing out of Monitor ends the session; a new sign-in goes through Source again.
 
 ### Rollback
 - Configuration error: revert the deployment change; the previous sign-in configuration returns.
