@@ -1,4 +1,5 @@
 // Modified by ErynoaGroup, 2026-10-13: product title and neutral icon placeholders.
+// Modified by ErynoaGroup, 2026-10-14: Erynoa header base domain and skip link target.
 
 package api
 
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -205,6 +207,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 		NewPreferencesPage:                  newPreferencesPage,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		ErynoaDomain:                        erynoaBaseDomain(appURL),
+		ErynoaSkipHref:                      c.Req.URL.EscapedPath() + "#pageContent",
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -333,4 +337,19 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	}
 
 	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
+}
+
+// erynoaBaseDomain returns the host of appURL without its first label (monitor.example.org ->
+// example.org), the same rule as the Erynoa header's web component. Hosts with fewer than three
+// labels are returned unchanged. No domain is configured in the repository.
+func erynoaBaseDomain(appURL string) string {
+	u, err := url.Parse(appURL)
+	if err != nil || u.Hostname() == "" {
+		return "localhost"
+	}
+	h := u.Hostname()
+	if parts := strings.Split(h, "."); len(parts) > 2 {
+		return strings.Join(parts[1:], ".")
+	}
+	return h
 }

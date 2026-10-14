@@ -1,6 +1,6 @@
 # Trademarks: RagFit | Monitor
 
-The RagFit name and the logo files in this directory are brand assets of
+The RagFit and Erynoa names and the logo files listed below are brand assets of
 Erynoa. All rights reserved. They are **not** licensed under the GNU AGPLv3
 (or any other license) that covers the RagFit | Monitor source code.
 
@@ -15,6 +15,9 @@ remain unaffected by this notice.
 
 - `public/img/ragfit/login-wordmark-light.png`
 - `public/img/ragfit/login-wordmark-dark.png`
+- `public/img/ragfit/erynoa/1.1.2/erynoa-en-lockup.svg` (Erynoa logo in the top bar; see
+  `public/img/ragfit/erynoa/NOTICE.md`)
+- The name "Erynoa" in the top bar
 - The name "RagFit" and "RagFit | Monitor" in product strings and titles
 
 Checksums of the logo files: `public/img/ragfit/SHA256SUMS`. Origin: `public/img/ragfit/PROVENANCE.md`.
@@ -24,5 +27,5 @@ reference and are covered by the AGPLv3 like the rest of the source code.
 
 ## For forks
 
-Remove or replace the files listed above and the RagFit product strings before you
+Remove or replace the files listed above, the Erynoa top bar (or its logo and name) and the RagFit product strings before you
 distribute or operate a modified version, unless Erynoa has given written permission.
