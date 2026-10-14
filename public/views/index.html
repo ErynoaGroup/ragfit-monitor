@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- Modified by ErynoaGroup, 2026-10-13: RagFit Monitor title and neutral icons. -->
+<!-- Modified by ErynoaGroup, 2026-10-14: Erynoa header 1.1.1 (server-rendered, works without JS). -->
 <html lang="[[.User.Language]]">
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
@@ -18,6 +19,8 @@
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/ragfit/placeholder-icon.svg" color="#8e8e8e" />
+    <link rel="stylesheet" href="[[.Assets.ContentDeliveryURL]]public/build/img/ragfit/erynoa/1.1.1/erynoa-header.v1.css" />
+    <link rel="stylesheet" href="[[.Assets.ContentDeliveryURL]]public/build/img/ragfit/erynoa/ragfit-monitor-header.css" />
 
     [[range $asset := .Assets.CSSFiles]]
       <link rel="stylesheet" href="[[$asset.FilePath]]" />
@@ -42,6 +45,32 @@
   </head>
 
   <body class="theme-[[ .ThemeType ]] [[.AppNameBodyClass]]">
+    <!-- Erynoa header 1.1.1 (public/img/ragfit/erynoa/1.1.1/erynoa-header.v1.html). Only the theme, the
+         skip link, the logo link and the domain are filled in; see ragfit/scripts/check-erynoa-header.sh. -->
+    <header class="erh" role="banner" data-erynoa-header="1.1.1"[[ if or (eq .ThemeType "light") (eq .ThemeType "dark") ]] data-erh-theme="[[ .ThemeType ]]"[[ end ]]>
+      <a class="erh-skip" href="[[.ErynoaSkipHref]]">Skip to content</a>
+      <a class="erh-brand" href="https://source.[[.ErynoaDomain]]/" aria-label="Erynoa">
+        <span class="erh-logo" role="img" aria-label="Erynoa"></span>
+      </a>
+      <nav class="erh-nav" aria-label="RagFit services">
+        <ul>
+          <li><a data-erh-service="source" href="https://source.[[.ErynoaDomain]]/">Source</a></li>
+          <li><a data-erh-service="plan"   href="https://plan.[[.ErynoaDomain]]/">Plan</a></li>
+          <li><a data-erh-service="memory" href="https://memory.[[.ErynoaDomain]]/">Memory</a></li>
+          <li><a data-erh-service="docs"   href="https://docs.[[.ErynoaDomain]]/">Docs</a></li>
+          <li><a data-erh-service="auth"   href="https://auth.[[.ErynoaDomain]]/">Auth</a></li>
+        </ul>
+      </nav>
+      <div class="erh-slot-end"><!-- optional app slot (user menu etc.) --></div>
+    </header>
+    <script nonce="[[.Nonce]]">
+      // Optional: after client-side navigation the server-rendered skip href points at the first URL,
+      // so move focus in place instead. Without JS the link still works for the page as loaded.
+      document.querySelector('.erh-skip').addEventListener('click', function (e) {
+        var main = document.getElementById('pageContent');
+        if (main) { e.preventDefault(); main.focus(); main.scrollIntoView(); }
+      });
+    </script>
     <style>
       .preloader {
         height: 100%;

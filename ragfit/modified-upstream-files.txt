@@ -2,7 +2,9 @@
 # header (where the format allows comments) and an entry in MODIFICATIONS.md.
 NOTICE.md
 conf/defaults.ini
+pkg/api/dtos/index.go
 pkg/api/index.go
+pkg/api/index_test.go
 pkg/services/frontend/index.html
 public/app/core/components/Branding/Branding.tsx
 public/app/core/components/Login/LoginLayout.tsx

@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: AGPL-3.0-only
+ * RagFit Monitor glue for the Erynoa header 1.1.1 (the package in ./1.1.1/ stays unchanged).
+ * Self-hosted Hanken Grotesk (SIL OFL 1.1, ./fonts/hanken-grotesk/OFL.txt), no CDN.
+ * Layout: the bar is fixed at the top and the page is pushed down by its height, so Grafana's own
+ * fixed top bar (top: auto) sits right below it. z-index stays below Grafana's dropdowns, modals and
+ * tooltips (1030 and up) and above its fixed top bar (1000). */
+@font-face { font-family: "Hanken Grotesk"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/hanken-grotesk/HankenGrotesk-Regular.otf") format("opentype"); }
+@font-face { font-family: "Hanken Grotesk"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("fonts/hanken-grotesk/HankenGrotesk-Medium.otf") format("opentype"); }
+@font-face { font-family: "Hanken Grotesk"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("fonts/hanken-grotesk/HankenGrotesk-SemiBold.otf") format("opentype"); }
+:root { --erh-position: fixed; --erh-z: 1010; --ragfit-erh-offset: var(--erh-height); }
+@media (max-width: 639px) { :root { --ragfit-erh-offset: var(--erh-height-mobile); } }
+.erh { left: 0; right: 0; }
+body { padding-top: var(--ragfit-erh-offset); box-sizing: border-box; }
+@media print { body { padding-top: 0; } }

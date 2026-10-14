@@ -52,6 +52,10 @@ jobs:
         run: |
           python3 -m pip install --quiet jmespath==1.0.1
           python3 ragfit/scripts/test-role-mapping.py
+      - name: Erynoa header 1.1.1 (bundled SHA256SUMS, file set, markup in index.html)
+        run: ragfit/scripts/check-erynoa-header.sh
+      - name: Erynoa header check tests
+        run: ragfit/scripts/test-check-erynoa-header.sh
       - name: Brand scan (report only until the branding patch lands)
         continue-on-error: true
         run: grep -rliI 'grafana' public/locales public/img | grep -v -x -f <(grep -v '^#' ragfit/brand-allowlist.txt) || true

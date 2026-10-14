@@ -1,3 +1,5 @@
+// Modified by ErynoaGroup, 2026-10-14: Erynoa header fields (base domain, skip link target).
+
 package dtos
 
 import (
@@ -42,6 +44,12 @@ type IndexViewData struct {
 	AssetSriChecksEnabled bool   `json:"-"`
 	NewPreferencesPage    bool   `json:"-"`
 	OFREPRootUrlEnabled   bool   `json:"-"`
+	// ErynoaDomain is the base domain for the Erynoa header links: the root_url host minus its
+	// first label (monitor.<domain> -> <domain>), resolved at runtime, never stored in the repo.
+	ErynoaDomain string `json:"-"`
+	// ErynoaSkipHref is the skip link target: the requested path plus #pageContent, because
+	// the page's <base href> would otherwise turn a bare fragment into a link to the home page.
+	ErynoaSkipHref string `json:"-"`
 }
 
 type EntryPointAssets struct {
