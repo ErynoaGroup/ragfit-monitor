@@ -1,3 +1,4 @@
+// Modified by ErynoaGroup, 2026-10-14: product title instead of the upstream product name in the welcome text test.
 import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
@@ -91,7 +92,7 @@ describe('HomeRoute', () => {
 
     render(<HomeRoute {...props} />);
 
-    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Welcome to RagFit \| Monitor/i)).toBeInTheDocument();
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
@@ -100,7 +101,7 @@ describe('HomeRoute', () => {
 
     render(<HomeRoute {...props} />);
 
-    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Welcome to RagFit \| Monitor/i)).toBeInTheDocument();
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
@@ -131,7 +132,7 @@ describe('HomeRoute', () => {
 
     render(<HomeRoute {...props} />);
 
-    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Welcome to RagFit \| Monitor/i)).toBeInTheDocument();
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 

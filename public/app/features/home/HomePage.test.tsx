@@ -1,3 +1,4 @@
+// Modified by ErynoaGroup, 2026-10-14: product title instead of the upstream product name in the welcome text test.
 import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen } from 'test/test-utils';
@@ -95,7 +96,7 @@ describe('HomePage', () => {
     config.buildInfo.edition = GrafanaEdition.OpenSource;
 
     render(<HomePage />);
-    expect(await screen.findByText('Welcome to Grafana.')).toBeInTheDocument();
+    expect(await screen.findByText('Welcome to RagFit | Monitor.')).toBeInTheDocument();
   });
 
   it('renders dashboard tabs and auto-switches to starred', async () => {

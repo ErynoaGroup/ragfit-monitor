@@ -1,3 +1,4 @@
+// Modified by ErynoaGroup, 2026-10-14: product title instead of the upstream product name in the welcome text.
 import { css } from '@emotion/css';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
@@ -7,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Grid, Stack, useStyles2 } from '@grafana/ui';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
@@ -36,7 +38,8 @@ const getEdition = () => {
     return t('home.home-page.edition.enterprise', 'Grafana Enterprise');
   }
 
-  return t('home.home-page.edition.open-source', 'Grafana');
+  // RagFit Monitor: the open source build shows the product title (Branding.AppTitle), not the upstream name.
+  return Branding.AppTitle;
 };
 
 /**
