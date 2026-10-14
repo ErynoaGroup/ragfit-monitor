@@ -4,7 +4,7 @@ Inventory of every plugin in the RagFit Monitor image, with its type and license
 air-gapped. "Air-gapped" means it works with no outside calls and no cloud service; calls to data
 sources that the operator configures inside the network are fine.
 
-Basis: release `ragfit-monitor-v0.1.1` (upstream v13.2.4), `ragfit/plugins-allowlist.txt`, the
+Basis: release `ragfit-monitor-v0.1.3` (upstream v13.2.4), `ragfit/plugins-allowlist.txt`, the
 plugin sources under `public/app/plugins/` and `pkg/tsdb/`, `conf/defaults.ini`, and the vendor docs.
 
 Verification legend:
@@ -37,6 +37,35 @@ a deployment that needs one adds it through a reviewed allowlist PR.
 | `prometheus` (Prometheus) | 13.2.3 | datasource, backend (`gpx_*`) | AGPL-3.0-only | **Yes**, with an internal Prometheus | Only the configured Prometheus URL. Optional cloud auth (AWS SigV4, Azure) is used only when it is configured (unverified in detail). | code (`LICENSE` in the package, signature, license and module scan) |
 | `loki` (Loki) | 13.2.2 | datasource, backend (`gpx_*`) | AGPL-3.0-only | **Yes**, with an internal Loki | Only the configured Loki URL; live tailing goes through the instance (unverified in detail) | code (`LICENSE` in the package, signature, license and module scan) |
 | `tempo` (Tempo) | 13.2.4 | datasource, backend (`gpx_*`) | AGPL-3.0-only | **Yes**, with an internal Tempo | Only the configured Tempo URL and the linked data sources configured for traces to logs or metrics (unverified in detail) | code (`LICENSE` in the package, signature, license and module scan) |
+
+### Source, integrity and signature of the baked plugins
+
+| Plugin | Source | SHA-256 linux-arm64 zip | SHA-256 linux-amd64 zip | Signature |
+|---|---|---|---|---|
+| `yesoreyeram-infinity-datasource` 3.11.1 | public plugin catalog | `4d42f7525d495f40274436674e8ae0768e10545fb3bc6fe71c7750517cddcd9f` | `422668d177ff14de3c97f3b128cee09890d04aa767e4513bb7b6c5336fa737d7` | `MANIFEST.txt`, checked offline against the pinned plugin signing key |
+| `prometheus` 13.2.3 | public plugin catalog | `a49bb6a6fe6e79578dc78841ce7f437a50d294a0fdb74bf25214cd6ce75d85db` | `8bdd6583e398f84d497dabec0287563b9eee471d711dea08a21482db5cd5a294` | same |
+| `loki` 13.2.2 | public plugin catalog | `7351ef25f01bf5347ad0db13b66a8cbc8b6b91272dc11f42ea2d700a3ac60163` | `0d1f5794d34febc54e55ac05ac92ea4ad6548ec3f2521865116c9ed46f7d55e9` | same |
+| `tempo` 13.2.4 | public plugin catalog | `b55cc94908ea2736d783940b2dc503d6217e83e014e8705e5a16d6887fb4c3d5` | `a89fa4ee83a61e58dac30eae3ce42ae6f677545d05e419b88f0a6f5f6cfdf8e7` | same |
+
+The source of truth is `ragfit/plugins-allowlist.txt`; this table mirrors it for v0.1.3. The package
+is downloaded at build time from the catalog download endpoint (`fetch-plugins.sh`), rejected unless
+its SHA-256 matches the pin, then `verify-plugin-signature.sh` checks `MANIFEST.txt` (signature, id,
+version, per-file SHA-256) and `check-plugins.sh` / `plugin-licenses.sh` check type, license and the
+Go modules in the backend binary. Any mismatch fails the build. Runtime installs are off, so the
+image contains exactly these versions. The image itself is signed with the release key and carries
+SPDX SBOM and SLSA provenance attestations.
+
+### How to update a baked plugin
+1. Pick the version the catalog lists as compatible with the Grafana version of this fork.
+2. In one reviewed PR, change the line in `ragfit/plugins-allowlist.txt` (version and both SHA-256
+   values) and the tables in this file. `verify-plugin-pins.sh` recomputes the checksums from the
+   catalog; never copy them from a third party.
+3. CI runs the pin, signature, license and bake checks for both architectures; a new Go module with a
+   non-compatible license needs a reviewed entry in `ragfit/license-exceptions.txt` or the update is
+   dropped.
+4. Release a new image through the release workflow and deploy it by digest. Rollback is the previous
+   image digest; plugins are never installed or downgraded inside a running pod.
+5. Adding a new plugin follows the same path, plus the policy in `ragfit/PLUGINS.md`.
 
 Recommendation: provision Infinity with `jsonData.allowedHosts` listing only internal hosts. Infinity
 requires allowed hosts anyway once authentication or custom headers are set.
