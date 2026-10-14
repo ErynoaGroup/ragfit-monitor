@@ -9,3 +9,8 @@ github.com/jmespath/go-jmespath Apache-2.0 (repository license), no license file
 github.com/segmentio/asm MIT-0 (repository license), not detected by the classifier
 github.com/grafana/nanogit/gittest Apache-2.0 (repository license), test helper package
 yesoreyeram-infinity-datasource Apache-2.0 (LICENSE in the 3.11.1 package, public source), AGPL-3.0 compatible; runtime plugin, not a Go dependency; pinned in ragfit/plugins-allowlist.txt
+github.com/grafana/tempo AGPL-3.0, compatible with this AGPL-3.0 project, source public (compiled into the AGPL-3.0 tempo datasource plugin)
+github.com/grafana/loki/v3 AGPL-3.0, compatible with this AGPL-3.0 project, source public (compiled into the AGPL-3.0 loki datasource plugin)
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib AGPL-3.0, compatible with this AGPL-3.0 project, source public (prometheus datasource library)
+github.com/grafana/grafana/apps/scope AGPL-3.0, compatible with this AGPL-3.0 project, source public (module of this repository's upstream)
+github.com/grafana/grafana/pkg/apimachinery AGPL-3.0 as detected, compatible with this AGPL-3.0 project, source public (module of this repository's upstream)

@@ -9,3 +9,6 @@
 # deployment adds them to its own allowlist copy (checksums "-") and its own image layer.
 # Changes need a reviewed PR.
 yesoreyeram-infinity-datasource 3.11.1 4d42f7525d495f40274436674e8ae0768e10545fb3bc6fe71c7750517cddcd9f 422668d177ff14de3c97f3b128cee09890d04aa767e4513bb7b6c5336fa737d7 Apache-2.0 backend
+prometheus 13.2.3 a49bb6a6fe6e79578dc78841ce7f437a50d294a0fdb74bf25214cd6ce75d85db 8bdd6583e398f84d497dabec0287563b9eee471d711dea08a21482db5cd5a294 AGPL-3.0-only backend
+loki 13.2.2 7351ef25f01bf5347ad0db13b66a8cbc8b6b91272dc11f42ea2d700a3ac60163 0d1f5794d34febc54e55ac05ac92ea4ad6548ec3f2521865116c9ed46f7d55e9 AGPL-3.0-only backend
+tempo 13.2.4 b55cc94908ea2736d783940b2dc503d6217e83e014e8705e5a16d6887fb4c3d5 a89fa4ee83a61e58dac30eae3ce42ae6f677545d05e419b88f0a6f5f6cfdf8e7 AGPL-3.0-only backend
