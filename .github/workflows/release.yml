@@ -130,6 +130,32 @@ jobs:
         run: |
           set -euo pipefail
           for a in arm64 amd64; do syft "$IMAGE@$(cat "out/digest-$a")" -o "spdx-json=sbom-$a.spdx.json"; done
+      # Provenance is self-asserted from this job (about SLSA Build L1/L2), not an L3 generator; same
+      # predicate format as the other key-signed forks (SLSA v1, cosign type slsaprovenance1).
+      - name: Provenance predicate (SLSA v1, no key needed)
+        env:
+          REPO: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          jq -n --arg repo "$REPO" --arg server "$SERVER" --arg run "$RUN_ID" --arg attempt "$RUN_ATTEMPT" \
+                --arg ref "$REF" --arg sha "$SHA" --arg wf "$WORKFLOW_REF" --arg event "$EVENT" '{
+            buildDefinition: {
+              buildType: "https://actions.github.io/buildtypes/workflow/v1",
+              externalParameters: { workflow: { ref: $ref, repository: ($server + "/" + $repo), path: ".github/workflows/release.yml" } },
+              internalParameters: { github: { event_name: $event, workflow_ref: $wf } },
+              resolvedDependencies: [ { uri: ("git+" + $server + "/" + $repo + "@" + $ref), digest: { gitCommit: $sha } } ]
+            },
+            runDetails: {
+              builder: { id: ($server + "/" + $wf) },
+              metadata: { invocationId: ($server + "/" + $repo + "/actions/runs/" + $run + "/attempts/" + $attempt) }
+            }
+          }' > provenance.json
       - name: Sign and attest with the CI key (no transparency log)
         env:
           INDEX: ${{ steps.index.outputs.digest }}
@@ -139,15 +165,17 @@ jobs:
           set -euo pipefail
           [ -n "$COSIGN_PRIVATE_KEY" ] && [ -n "$COSIGN_PASSWORD" ] || { echo "COSIGN_PRIVATE_KEY/COSIGN_PASSWORD secrets missing"; exit 1; }
           s()  { cosign sign   --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false "$1"; }
-          at() { cosign attest --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false --type spdxjson --predicate "$1" "$2"; }
+          at() { cosign attest --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false --type "$1" --predicate "$2" "$3"; }
           s "$IMAGE@$INDEX"
           for a in arm64 amd64; do
             s "$IMAGE@$(cat "out/digest-$a")"
-            at "sbom-$a.spdx.json" "$IMAGE@$(cat "out/digest-$a")"
+            at spdxjson "sbom-$a.spdx.json" "$IMAGE@$(cat "out/digest-$a")"
+            at slsaprovenance1 provenance.json "$IMAGE@$(cat "out/digest-$a")"
           done
           # The index carries the arm64 SBOM (target nodes); each platform image carries its own.
-          at sbom-arm64.spdx.json "$IMAGE@$INDEX"
-      - name: Verify signatures and SBOM attestations against cosign.pub
+          at spdxjson sbom-arm64.spdx.json "$IMAGE@$INDEX"
+          at slsaprovenance1 provenance.json "$IMAGE@$INDEX"
+      - name: Verify signatures, SBOM and provenance attestations against cosign.pub
         env:
           INDEX: ${{ steps.index.outputs.digest }}
         run: |
@@ -155,6 +183,8 @@ jobs:
           for ref in "$IMAGE@$INDEX" "$IMAGE@$(cat out/digest-arm64)" "$IMAGE@$(cat out/digest-amd64)"; do
             cosign verify --key ragfit/cosign.pub --insecure-ignore-tlog=true "$ref" > /dev/null
             cosign verify-attestation --type spdxjson --key ragfit/cosign.pub --insecure-ignore-tlog=true "$ref" > /dev/null
+            cosign verify-attestation --type slsaprovenance1 --key ragfit/cosign.pub --insecure-ignore-tlog=true "$ref" > /dev/null
+            echo "verified: signature, spdxjson, slsaprovenance1 for $ref"
           done
           echo "signatures and attestations verified for $IMAGE@$INDEX and both platform images"
       - name: Source tarball (AGPL corresponding source)
@@ -165,6 +195,6 @@ jobs:
           INDEX: ${{ steps.index.outputs.digest }}
         run: |
           set -euo pipefail
-          notes="Upstream $UPSTREAM_VERSION. Image digest $INDEX (multi-arch index: linux/arm64 $(cat out/digest-arm64), linux/amd64 $(cat out/digest-amd64)). Signed and SBOM-attested with the key in ragfit/cosign.pub, without a transparency log entry."
+          notes="Upstream $UPSTREAM_VERSION. Image digest $INDEX (multi-arch index: linux/arm64 $(cat out/digest-arm64), linux/amd64 $(cat out/digest-amd64)). Signed, SBOM- and SLSA-provenance-attested with the key in ragfit/cosign.pub, without a transparency log entry."
           gh release create "$REF_NAME" sbom-arm64.spdx.json sbom-amd64.spdx.json source.tar.gz \
             out/licenses-arm64.tar.gz out/licenses-amd64.tar.gz ragfit/cosign.pub --notes "$notes"
