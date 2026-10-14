@@ -10,9 +10,9 @@ fails() { local why=$1; shift; if "$@" >/dev/null 2>&1; then echo "FAIL (expecte
 fresh() { rm -rf "$T/e" && cp -r "$ROOT/public/img/ragfit/erynoa" "$T/e" && cp "$ROOT/public/views/index.html" "$T/index.html"; }
 
 fresh; pass env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
-fresh; echo "/* x */" >> "$T/e/1.1.3/erynoa-header.v1.css"; fails "package file changed" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
-fresh; cp "$T/e/1.1.3/LICENSE" "$T/e/1.1.3/extra.txt"; fails "extra file in 1.1.3" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
-fresh; rm "$T/e/1.1.3/CHANGELOG.md"; fails "missing file in 1.1.3" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
+fresh; echo "/* x */" >> "$T/e/1.1.4/erynoa-header.v1.css"; fails "package file changed" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
+fresh; cp "$T/e/1.1.4/LICENSE" "$T/e/1.1.4/extra.txt"; fails "extra file in 1.1.4" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
+fresh; rm "$T/e/1.1.4/CHANGELOG.md"; fails "missing file in 1.1.4" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
 fresh; echo x >> "$T/e/fonts/hanken-grotesk/OFL.txt"; fails "font license changed" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
 fresh; cp "$T/e/fonts/hanken-grotesk/OFL.txt" "$T/e/fonts/hanken-grotesk/x.otf"; fails "unlisted font" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
 fresh; sed -i 's|>Plan</a>|>Planning</a>|' "$T/index.html"; fails "nav label changed" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
@@ -27,4 +27,5 @@ fresh; python3 - "$T/index.html" <<'PY'
 import sys; p=sys.argv[1]; s=open(p).read(); i=s.index('[[ if .ErynoaDomain ]]', s.index('<body')); s=s[:i]+s[i+len('[[ if .ErynoaDomain ]]'):]; open(p,'w').write(s)
 PY
 fails "header not wrapped" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
+fresh; sed -i 's|erynoa/1.1.4/erynoa-en-lockup.svg#wordmark|erynoa/1.1.3/erynoa-en-lockup.svg#wordmark|' "$T/index.html"; fails "logo from another version" env ERYNOA_DIR="$T/e" "$C" "$T/index.html"
 echo "ok: $n check-erynoa-header tests"

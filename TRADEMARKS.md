@@ -15,7 +15,7 @@ remain unaffected by this notice.
 
 - `public/img/ragfit/login-wordmark-light.png`
 - `public/img/ragfit/login-wordmark-dark.png`
-- `public/img/ragfit/erynoa/1.1.3/erynoa-en-lockup.svg` (Erynoa logo in the top bar; see
+- `public/img/ragfit/erynoa/1.1.4/erynoa-en-lockup.svg` (Erynoa logo in the top bar; see
   `public/img/ragfit/erynoa/NOTICE.md`)
 - The name "Erynoa" in the top bar
 - The name "RagFit" and "RagFit | Monitor" in product strings and titles

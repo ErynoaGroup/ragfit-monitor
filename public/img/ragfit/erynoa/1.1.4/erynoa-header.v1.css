@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT
- * Copyright (c) 2026 Erynoa — Erynoa header v1.1.3 (code only; logo/name: see NOTICE.md) */
+ * Copyright (c) 2026 Erynoa — Erynoa header v1.1.4 (code only; logo/name: see NOTICE.md) */
 :root {
   --erh-height: 48px;           /* desktop */
   --erh-height-mobile: 56px;    /* < 640px */
@@ -7,7 +7,6 @@
   --erh-position: sticky;       /* apps without body scroll (OpenProject): relative */
   --erh-font: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --erh-logo-height: 22px;
-  --erh-logo-url: url("erynoa-en-lockup.svg");
   --erh-bg: #ffffff;
   --erh-fg: #0a0a0a;            /* erynoaInk, 19.8:1 on bg */
   --erh-muted: #46463f;         /* erynoaText, 9.6:1 on bg */
@@ -49,6 +48,18 @@
   background: var(--erh-bg); color: var(--erh-fg);
   border-bottom: 1px solid var(--erh-border);
   font: 500 14px/1 var(--erh-font);
+  color-scheme: light;
+}
+/* Per-theme color-scheme on the header only (never on the host page). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-erh-theme="light"]) .erh:not([data-erh-theme="light"]) { color-scheme: dark; }
+}
+:root[data-erh-theme="dark"] .erh:not([data-erh-theme="light"]), .erh[data-erh-theme="dark"] { color-scheme: dark; }
+.erh[data-erh-theme="light"] { color-scheme: light; }
+@media (forced-colors: active) {
+  .erh { border-bottom-color: CanvasText; }
+  .erh-logo { fill: currentColor; } /* follows LinkText/CanvasText of the forced palette */
+  .erh-nav a[aria-current="page"] { outline: 1px solid; }
 }
 .erh *, .erh *::before, .erh *::after { box-sizing: border-box; }
 .erh-skip {
@@ -58,10 +69,10 @@
 .erh-skip:focus { top: 8px; }
 .erh-brand { display: inline-flex; align-items: center; height: 100%; color: inherit; flex: none; }
 .erh-logo {
-  display: block; height: var(--erh-logo-height); aspect-ratio: 1150 / 347;
-  background-color: currentColor;
-  -webkit-mask: var(--erh-logo-url) center / contain no-repeat;
-          mask: var(--erh-logo-url) center / contain no-repeat;
+  /* Inline <svg><use> of the unmodified lockup, ink = currentColor. Chrome forced auto-dark treats it
+     as foreground (lightens it) instead of a background (darkens it), so it always contrasts with the bar. */
+  display: block; height: var(--erh-logo-height); width: auto; aspect-ratio: 1150 / 347;
+  fill: currentColor; color: inherit;
 }
 .erh-nav { height: 100%; min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: 8px; }
 .erh-nav::-webkit-scrollbar { display: none; }

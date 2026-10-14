@@ -1,5 +1,17 @@
 # Changelog — Erynoa header
 
+## 1.1.4 — 2026-10-14
+- Fix (reported by RagFit | Docs): under Chrome forced auto-dark the CSS-mask logo (painted as background) was darkened
+  with the bar → dark on dark. The logo is now an inline `<svg>` with `<use>` references to the unchanged
+  `erynoa-en-lockup.svg` (`fill: currentColor`), which Chrome treats as foreground. New placeholder `__ERH_ASSET_BASE__`
+  (partial) / attribute `assets` (web component, defaults to the script's directory). `--erh-logo-url` removed (unused).
+- README: new "Theme rule" section: the header always mirrors the host theme; dark-capable hosts follow system/user choice (no-JS default light); light-only hosts fix `data-erh-theme="light"`; a mismatch is never allowed.
+- Header declares `color-scheme` per theme on itself (not on the host page); forced-colors styles (border, current link outline).
+- RagFit | Auth light-only page in forced dark: Chrome darkens the whole page incl. header and ignores `only light`;
+  now legible, documented as expected behaviour.
+- Tested (headless Chrome, normal and forced dark, 1280/375, themes light/dark/auto, plus forced-colors and an
+  only-light host): logo contrast 18.4–20.7:1 in every case (v1.1.3: 1.0–1.2:1 under forced dark).
+
 ## 1.1.3 — 2026-10-14
 - Fix (reported by RagFit | Plan): at 320px the focused Monitor link stayed partly cut off in Chrome, which
   does not scroll a partially visible link on focus. Below 370px the spacing tightens further (link padding 3px,
