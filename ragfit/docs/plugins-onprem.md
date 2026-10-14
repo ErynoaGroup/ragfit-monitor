@@ -12,25 +12,31 @@ Verification legend:
 - **docs**: checked in the plugin vendor's documentation.
 - **unverified**: plausible, but not yet checked line by line. Treat it as open.
 
-## Important: core data sources not in the image
+## Separated core data sources
 
 Since 12.x upstream ships most data sources as separate catalog plugins: Prometheus, Loki, Tempo,
 Elasticsearch, InfluxDB, MySQL, PostgreSQL, MSSQL, Jaeger, Zipkin, OpenTSDB, Google Cloud Monitoring
 and Pyroscope. The upstream `make` targets download them from the public plugin catalog into
 `data/plugins-bundled` (`scripts/catalog-plugins-defaults`). The Dockerfile path used by the release
-runs only `make build-go`, so **none of them is in the image**. Runtime install and preinstall are
-off (`preinstall` empty, enforced by `check-plugins.sh`).
+runs only `make build-go`, so none of them comes from the upstream build. Runtime install and
+preinstall are off (`preinstall` empty, enforced by `check-plugins.sh`).
 
-The release log confirms it (code): the image check finds exactly one external plugin, Infinity
-3.11.1. Any deployment that uses one of these data sources needs it added the same way as Infinity:
-allowlist entry with checksums, license and type, then baked and signature-checked. Otherwise its
-datasources fail after an upgrade from 12.x. This has to be settled before such a switch.
+Up to v0.1.1 the image therefore contained only Infinity as an external plugin. Prometheus, Loki and
+Tempo are now on the allowlist and baked the same way as Infinity: pinned version and checksums per
+architecture, license and type, and a signature check against the pinned key. Their catalog ids are
+`prometheus`, `loki` and `tempo` (`plugin.json` id), and their binaries are named
+`gpx_grafana-<name>-datasource`. The pinned version is the one the catalog selects for Grafana 13.2.4,
+the same selection the upstream download script uses. The other separated data sources are not baked;
+a deployment that needs one adds it through a reviewed allowlist PR.
 
 ## Allowlisted and baked plugins
 
 | Plugin | Version | Type | License | Air-gapped | Known external endpoints | Basis |
 |---|---|---|---|---|---|---|
 | `yesoreyeram-infinity-datasource` (Infinity) | 3.11.1 | datasource, backend (`gpx_*`) | Apache-2.0 | **Yes**, if every query URL is inside the network | Only the URLs that dashboards or the datasource configure. Without *Allowed hosts*, any host can be queried. Built-in examples and help link to public sample data (unverified). The binary makes no telemetry or licence calls (unverified). | docs (allowed hosts, base URL); code (licence and module scan in `plugin-licenses.sh`, signature check) |
+| `prometheus` (Prometheus) | 13.2.3 | datasource, backend (`gpx_*`) | AGPL-3.0-only | **Yes**, with an internal Prometheus | Only the configured Prometheus URL. Optional cloud auth (AWS SigV4, Azure) is used only when it is configured (unverified in detail). | code (`LICENSE` in the package, signature, license and module scan) |
+| `loki` (Loki) | 13.2.2 | datasource, backend (`gpx_*`) | AGPL-3.0-only | **Yes**, with an internal Loki | Only the configured Loki URL; live tailing goes through the instance (unverified in detail) | code (`LICENSE` in the package, signature, license and module scan) |
+| `tempo` (Tempo) | 13.2.4 | datasource, backend (`gpx_*`) | AGPL-3.0-only | **Yes**, with an internal Tempo | Only the configured Tempo URL and the linked data sources configured for traces to logs or metrics (unverified in detail) | code (`LICENSE` in the package, signature, license and module scan) |
 
 Recommendation: provision Infinity with `jsonData.allowedHosts` listing only internal hosts. Infinity
 requires allowed hosts anyway once authentication or custom headers are set.
@@ -85,9 +91,9 @@ These are recommendations for an on-premises deployment. Changing them is a sepa
 configuration change.
 
 ## Open items
-- Decide which of the separated core data sources (Prometheus, Loki, Tempo, …) go on the allowlist,
-  and bake them. Without that an air-gapped deployment has only Infinity, Graphite, Alertmanager and
-  the built-ins.
+- Decide whether further separated core data sources (Elasticsearch, PostgreSQL, …) go on the
+  allowlist. Prometheus, Loki and Tempo are baked.
+- Run the same egress-blocked test for Prometheus, Loki and Tempo.
 - Verify the Infinity binary and its frontend for outside calls (static scan of `module.js` and an
   egress-blocked test run).
 - Verify the exact AWS and Azure endpoint lists, if those plugins are ever used. Both are cloud-only.

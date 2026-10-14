@@ -38,6 +38,14 @@ parse "dep without hash and without replacement fails" 1 '' \
   "$H"'\tdep\ta.invalid/x\tv1.0.0\n\tdep\tb.invalid/y\tv2.0.0\th1:bbb=\n'"$B"
 parse "local directory replacement fails" 1 '' \
   "$H"'\tdep\ta.invalid/x\tv1.0.0\n\t=>\t./local\t(devel)\t\n'"$B"
+parse "whitespace-only line after a replacement is skipped" 0 'fork.invalid/y v2.1.0 h1:fff=\nc.invalid/z v3.0.0 h1:ccc=' \
+  "$H"'\tdep\tb.invalid/y\tv2.0.0\n\t=>\tfork.invalid/y\tv2.1.0\th1:fff=\n\t\n\tdep\tc.invalid/z\tv3.0.0\th1:ccc=\n'"$B"
+parse "local replacement below the main module is skipped" 0 'c.invalid/z v3.0.0 h1:ccc=' \
+  "$H"'\tdep\texample.invalid/backend/pkg/lib\tv0.0.20\n\t=>\t./pkg/lib\t(devel)\t\n\t\n\tdep\tc.invalid/z\tv3.0.0\th1:ccc=\n'"$B"
+parse "local replacement of a sibling-prefix module fails" 1 '' \
+  "$H"'\tdep\texample.invalid/backend-evil\tv0.0.1\n\t=>\t./evil\t(devel)\t\n'"$B"
+parse "local replacement of a foreign module fails" 1 '' \
+  "$H"'\tdep\tother.invalid/lib\tv1.0.0\n\t=>\t../lib\t(devel)\t\n'"$B"
 parse "replacement without dep fails" 1 '' "$H"'\t=>\tfork.invalid/y\tv2.1.0\th1:fff=\n'"$B"
 parse "unknown line fails" 1 '' "$H"'\tdep\ta.invalid/x\tv1.0.0\th1:aaa=\n\tweird\tline\n'"$B"
 parse "no build info fails" 1 '' 'gpx: go1.22.5\n'
