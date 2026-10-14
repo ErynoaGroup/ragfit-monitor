@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Erynoa — <erynoa-header> v1.1.2. No deps, no network calls, no tracking.
+// Copyright (c) 2026 Erynoa — <erynoa-header> v1.1.3. No deps, no network calls, no tracking.
 // Usage: <erynoa-header current="plan" [domain="example.org"] [skip-target="#main"] [home="https://…/"] [theme="dark|light"]></erynoa-header>
 // home defaults to https://source.<domain>/.
 // Without `domain`, the base domain is derived from location.hostname by dropping the first label
@@ -19,7 +19,7 @@
       const theme = this.getAttribute("theme");
       const slot = this.querySelector(".erh-slot-end");
       const h = document.createElement("header");
-      h.className = "erh"; h.setAttribute("role", "banner"); h.dataset.erynoaHeader = "1.1.2";
+      h.className = "erh"; h.setAttribute("role", "banner"); h.dataset.erynoaHeader = "1.1.3";
       if (theme === "dark" || theme === "light") h.dataset.erhTheme = theme;
       const a = (cls, href, text) => { const e = document.createElement("a"); e.className = cls; e.href = href; if (text) e.textContent = text; return e; };
       h.append(a("erh-skip", skip, "Skip to content"));
@@ -34,6 +34,8 @@
         li.append(l); ul.append(li);
       }
       nav.append(ul); h.append(nav);
+      // Even narrower hosts: bring a focused link fully into view (Chrome skips partially visible ones).
+      nav.addEventListener("focusin", (e) => { if (e.target.scrollIntoView) e.target.scrollIntoView({ inline: "nearest", block: "nearest" }); });
       const end = slot || document.createElement("div"); end.className = "erh-slot-end"; h.append(end);
       this.replaceChildren(h);
     }
