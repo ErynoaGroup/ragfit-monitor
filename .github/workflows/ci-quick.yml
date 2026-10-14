@@ -106,7 +106,7 @@ jobs:
       - name: Lint changed upstream frontend files
         run: |
           grep -v '^#' ragfit/modified-upstream-files.txt | grep -E '[.]tsx?$' | xargs -r yarn eslint --max-warnings 0
-      - name: Unit tests for branding and login
-        run: yarn jest --ci public/app/core/components/Branding public/app/core/components/Login
+      - name: Unit tests for branding, login and the home page welcome text
+        run: yarn jest --ci public/app/core/components/Branding public/app/core/components/Login public/app/features/home/HomePage.test.tsx public/app/features/home/HomeRoute.test.tsx
       - name: Typecheck (app)
         run: yarn tsc --noEmit
